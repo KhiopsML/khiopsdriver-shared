@@ -19,7 +19,7 @@ protected:
   | Storage service          | Prefix                                                                        |
   | ------------------------ | ----------------------------------------------------------------------------- |
   | Amazon S3                | s3://diod-data-di-jupyterhub                                                  |
-  | Google cloud storage     | gs://data-test-khiops-driver-azure                                            |
+  | Google cloud storage     | gs://data-test-khiops-driver-gcs                                              |
   | Azurite emulated storage | http://localhost:10000/devstoreaccount1/data-test-khiops-driver-azure         |
   | Azure cloud blob storage | https://khiopsdriverazure.blob.core.windows.net/data-test-khiops-driver-azure |
   | Azure cloud file storage | https://khiopsdriverazure.file.core.windows.net/data-test-khiops-driver-azure |
