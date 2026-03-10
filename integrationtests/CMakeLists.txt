@@ -59,7 +59,6 @@ if(WIN32)
   target_link_libraries(basic_test PRIVATE
     GTest::gtest GTest::gmock GTest::gmock_main
     ${Boost_LIBRARIES}
-    Azure::azure-identity Azure::azure-storage-blobs
     fmt::fmt
     ${drivertarget}
     bcrypt)
@@ -67,7 +66,6 @@ else()
   target_link_libraries(basic_test PRIVATE
     GTest::gtest GTest::gmock GTest::gmock_main
     ${Boost_LIBRARIES}
-    Azure::azure-identity Azure::azure-storage-blobs
     fmt::fmt
     ${drivertarget})
 endif()

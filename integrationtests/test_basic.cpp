@@ -92,6 +92,7 @@ TEST(BasicTest, DriverConnectMissingCredentialsFailure) {
   GTEST_SKIP() << "To be implemented.";
 }
 
+// TODO: Move test to specific driver repo or fix it.
 void setup_bad_credentials() {
   boost::process::v2::environment::set(
       "AZURE_STORAGE_CONNECTION_STRING",
