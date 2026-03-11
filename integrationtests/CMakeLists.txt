@@ -47,8 +47,6 @@ target_compile_options(
   PRIVATE $<$<CXX_COMPILER_ID:AppleClang>:-Wall;-Wextra;-pedantic;-Wno-unused-lambda-capture>
   PRIVATE $<$<CXX_COMPILER_ID:Clang,GNU>:-Wall;-Wextra;-pedantic>)
 
-target_compile_definitions(basic_test PRIVATE ${drivername_compile_def} ${officiel_drivername_compile_def})
-
 # MSVC requires /bigobj to build in debug config
 target_compile_options(basic_test PRIVATE $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/bigobj>)
 
