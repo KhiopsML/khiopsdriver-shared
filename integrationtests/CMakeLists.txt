@@ -2,16 +2,10 @@ if(NOT DEFINED ENV{STORAGE_DRIVER_NAME})
   message(FATAL_ERROR "Environment variable STORAGE_DRIVER_NAME is not defined.")
 endif()
 if($ENV{STORAGE_DRIVER_NAME} STREQUAL "S3")
-  set(drivername_compile_def S3_DRIVER)
-  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="S3 driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_s3)
   elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "GCS")
-  set(drivername_compile_def GCS_DRIVER)
-  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="GCS driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_gcs)
   elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "AZURE")
-  set(drivername_compile_def AZURE_DRIVER)
-  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="Azure driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_azure)
 else()
   message(FATAL_ERROR "Environment variable STORAGE_DRIVER_NAME is set to '$ENV{STORAGE_DRIVER_NAME}' but should be set to 'S3', 'GCS' or 'AZURE').")

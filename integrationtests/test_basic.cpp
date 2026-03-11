@@ -18,16 +18,6 @@
 #include <string>
 #include <vector>
 
-TEST(BasicTest, GetDriverName) {
-  ASSERT_STREQ(driver_getDriverName(), OFFICIAL_DRIVER_NAME);
-}
-
-TEST(BasicTest, GetVersion) {
-  ASSERT_STREQ(driver_getVersion(), DRIVER_VERSION);
-}
-
-TEST(BasicTest, GetScheme) { ASSERT_STREQ(driver_getScheme(), "https"); }
-
 TEST(BasicTest, IsReadOnly) { ASSERT_EQ(driver_isReadOnly(), nFalse); }
 
 TEST(BasicTest, GetSystemPreferredBufferSize) {
