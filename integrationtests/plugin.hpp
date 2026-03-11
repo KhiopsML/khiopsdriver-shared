@@ -7,7 +7,7 @@
 #elif defined GCS_DRIVER
     #define DRIVER_VERSION KHIOPS_STR(0.0.16)
 #elif defined AZURE_DRIVER
-    #define DRIVER_VERSION KHIOPS_STR(0.0.5)
+    #define DRIVER_VERSION KHIOPS_STR(0.0.6)
 #else
     #error "S3_DRIVER, GCS_DRIVER or AZURE_DRIVER must be defined."
 #endif
