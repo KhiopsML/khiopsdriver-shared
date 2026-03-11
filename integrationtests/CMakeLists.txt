@@ -3,12 +3,15 @@ if(NOT DEFINED ENV{STORAGE_DRIVER_NAME})
 endif()
 if($ENV{STORAGE_DRIVER_NAME} STREQUAL "S3")
   set(drivername_compile_def S3_DRIVER)
+  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="S3 driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_s3)
-elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "GCS")
+  elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "GCS")
   set(drivername_compile_def GCS_DRIVER)
+  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="GCS driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_gcs)
-elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "AZURE")
+  elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "AZURE")
   set(drivername_compile_def AZURE_DRIVER)
+  set(official_drivername_compile_def OFFICIAL_DRIVER_NAME="Azure driver") # For driver_getDriverName() tests
   set(drivertarget khiopsdriver_file_azure)
 else()
   message(FATAL_ERROR "Environment variable STORAGE_DRIVER_NAME is set to '$ENV{STORAGE_DRIVER_NAME}' but should be set to 'S3', 'GCS' or 'AZURE').")
@@ -50,7 +53,7 @@ target_compile_options(
   PRIVATE $<$<CXX_COMPILER_ID:AppleClang>:-Wall;-Wextra;-pedantic;-Wno-unused-lambda-capture>
   PRIVATE $<$<CXX_COMPILER_ID:Clang,GNU>:-Wall;-Wextra;-pedantic>)
 
-target_compile_definitions(basic_test PRIVATE ${drivername_compile_def})
+target_compile_definitions(basic_test PRIVATE ${drivername_compile_def} ${officiel_drivername_compile_def})
 
 # MSVC requires /bigobj to build in debug config
 target_compile_options(basic_test PRIVATE $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/bigobj>)

@@ -19,7 +19,7 @@
 #include <vector>
 
 TEST(BasicTest, GetDriverName) {
-  ASSERT_STREQ(driver_getDriverName(), "Azure driver");
+  ASSERT_STREQ(driver_getDriverName(), OFFICIAL_DRIVER_NAME);
 }
 
 TEST(BasicTest, GetVersion) {
