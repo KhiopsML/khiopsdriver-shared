@@ -53,7 +53,7 @@ else()
     GTest::gtest GTest::gmock GTest::gmock_main
     ${Boost_LIBRARIES}
     fmt::fmt
-    ${storage_driver_target_name}
+    ${storage_driver_target_name})
 endif()
 
 gtest_discover_tests(basic_test PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/lsan_suppressions.txt")
