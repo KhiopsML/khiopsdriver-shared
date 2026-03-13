@@ -1,2 +1,0 @@
-# Ignore leaky library function
-leak:url_share_init
