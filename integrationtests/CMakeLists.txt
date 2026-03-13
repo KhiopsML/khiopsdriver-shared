@@ -1,14 +1,5 @@
-if(NOT DEFINED ENV{STORAGE_DRIVER_NAME})
-  message(FATAL_ERROR "Environment variable STORAGE_DRIVER_NAME is not defined.")
-endif()
-if($ENV{STORAGE_DRIVER_NAME} STREQUAL "S3")
-  set(drivertarget khiopsdriver_file_s3)
-  elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "GCS")
-  set(drivertarget khiopsdriver_file_gcs)
-  elseif($ENV{STORAGE_DRIVER_NAME} STREQUAL "AZURE")
-  set(drivertarget khiopsdriver_file_azure)
-else()
-  message(FATAL_ERROR "Environment variable STORAGE_DRIVER_NAME is set to '$ENV{STORAGE_DRIVER_NAME}' but should be set to 'S3', 'GCS' or 'AZURE').")
+if(NOT DEFINED storage_driver_target_name)
+  message(FATAL_ERROR "CMake variable storage_driver_target_name is not defined.")
 endif()
 
 # Fetch googletest from its Git repo
@@ -55,14 +46,14 @@ if(WIN32)
     GTest::gtest GTest::gmock GTest::gmock_main
     ${Boost_LIBRARIES}
     fmt::fmt
-    ${drivertarget}
+    ${storage_driver_target_name}
     bcrypt)
 else()
   target_link_libraries(basic_test PRIVATE
     GTest::gtest GTest::gmock GTest::gmock_main
     ${Boost_LIBRARIES}
     fmt::fmt
-    ${drivertarget})
+    ${storage_driver_target_name}
 endif()
 
 gtest_discover_tests(basic_test PROPERTIES ENVIRONMENT
