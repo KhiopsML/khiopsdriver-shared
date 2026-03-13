@@ -104,6 +104,12 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'w'), nullptr);
   ASSERT_EQ(driver_fwrite("abc", 1, 3, ohandle), 3);
   ASSERT_EQ(driver_fflush(ohandle), nFlushSuccess);
+  // FIXME: should we test reading from a file that is still open for writing?
+  //        It is currently not possible because all drivers do not behave the same, 
+  //        (not all drivers actually write upon fflush, some only write upon fclose)
+  //        but it could be a useful feature to add in the future. 
+  //        For now we close the file after writing to be able to read from it.
+  ASSERT_EQ(driver_fclose(ohandle), nCloseSuccess);
 
   // Open the file for reading. Internally this will fetch the ETag of the file
   ASSERT_NE(ihandle = driver_fopen(file.c_str(), 'r'), nullptr);
@@ -113,8 +119,12 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_STREQ(ibuffer, "abc");
 
   // Add some data to the file. The ETag of the file will be changed
+  // As in FIXME above, we have to reopen in append mode for drivers that do not 
+  // create the file upon fflush, forcing us to fclose.
+  ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'a'), nullptr);
   ASSERT_EQ(driver_fwrite("def", 1, 3, ohandle), 3);
   ASSERT_EQ(driver_fflush(ohandle), nFlushSuccess);
+  ASSERT_EQ(driver_fclose(ohandle), nCloseSuccess);
 
   // This second reading operation should fail because it should find an ETag
   // different to the one fetched by the driver_fopen call
@@ -132,7 +142,6 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_STREQ(ibuffer, "abcdef");
 
   ASSERT_EQ(driver_fclose(ihandle), nCloseSuccess);
-  ASSERT_EQ(driver_fclose(ohandle), nCloseSuccess);
   ASSERT_EQ(driver_remove(file.c_str()), nSuccess);
 
   ASSERT_EQ(driver_disconnect(), nSuccess);
