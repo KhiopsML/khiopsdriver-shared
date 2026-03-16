@@ -29,8 +29,6 @@ protected:
   > If you are not using the default Azurite configuration, change the prefix accordingly.
   > Note that Azurite does not support file storage emulation.
   > Also it does not support some blob storage features. For example, the one used of storage-server-side blob concatenation.
-  
-  > For Azurite and Azure storage services, make sure your prefix ends with a `/`, otherwise tests will not function properly.
   */
   std::string sPrefix;
 
