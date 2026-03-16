@@ -16,11 +16,6 @@ FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)
 
-set(STORAGE_DRIVER_TEST_URL_PREFIX_FOR_TESTS "$ENV{STORAGE_DRIVER_TEST_URL_PREFIX}")
-if(STORAGE_DRIVER_TEST_URL_PREFIX_FOR_TESTS STREQUAL "")
-  set(STORAGE_DRIVER_TEST_URL_PREFIX_FOR_TESTS "gs://data-test-khiops-driver-gcs")
-endif()
-
 # Find dependencies
 find_package(
   Boost
@@ -61,8 +56,4 @@ else()
     ${storage_driver_target_name})
 endif()
 
-gtest_discover_tests(basic_test
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                      PROPERTIES LABELS "integration" ENVIRONMENT
-                                 "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan_suppressions.txt;STORAGE_DRIVER_TEST_URL_PREFIX=${STORAGE_DRIVER_TEST_URL_PREFIX_FOR_TESTS}")
-                                 
+gtest_discover_tests(basic_test PROPERTIES ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/lsan_suppressions.txt")
