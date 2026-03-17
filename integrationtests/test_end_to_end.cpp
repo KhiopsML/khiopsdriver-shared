@@ -36,11 +36,11 @@ TEST_F(EndToEndTest, SingleFile2MB) {
                 2ULL * 1024 * 1024);
 }
 
-TEST_F(EndToEndTest, SingleFile512B) {
+TEST_F(EndToEndTest, SingleFile4KB) {
   /* use this particular file because it is short and buffer size triggers lots
    * of read operations */
   EndToEndTest_(url.BQShortFilePart(), url.RandomOutputFile(), sLocalFilePath,
-                512ULL);
+                4ULL * 1024);
 }
 
 TEST_F(EndToEndTest, MultipartBQFile512KB) {
