@@ -19,8 +19,8 @@ protected:
     oss << "/tmp/out-" << boost::uuids::random_generator()() << ".txt";
 #endif
     sLocalFilePath = oss.str();
-    ASSERT_EQ(driver_connect(), nSuccess) << "driver failed to connect during test initialization";
-    ASSERT_EQ(driver_isConnected(), nTrue) << "after driver connected, it is disconnected";
+    ASSERT_EQ(driver_connect(), kOtherSuccess) << "driver failed to connect during test initialization";
+    ASSERT_EQ(driver_isConnected(), kTrue) << "after driver connected, it is disconnected";
   }
   void TearDown() override { driver_disconnect(); }
   StorageTestUrlProvider url;

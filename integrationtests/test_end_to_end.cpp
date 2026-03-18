@@ -67,35 +67,35 @@ void EndToEndTest_(string sInputUrl, string sOutputUrl, string sLocalFilePath,
                    size_t nBufferSize) {
   cout << "Scheme: " << driver_getScheme() << endl;
   cout << "Is read-only: " << driver_isReadOnly() << endl;
-  ASSERT_EQ(driver_fileExists(sInputUrl.c_str()), nTrue)
+  ASSERT_EQ(driver_fileExists(sInputUrl.c_str()), kTrue)
       << "input file does not exist";
   size_t nInputFileSize = driver_getFileSize(sInputUrl.c_str());
   cout << "Size of " << sInputUrl << " is " << nInputFileSize << endl;
 
   for (const auto &Copy : {CopyFile, CopyFileWithFseek, CopyFileWithAppend}) {
     ASSERT_EQ(Copy(sInputUrl.c_str(), sOutputUrl.c_str(), nBufferSize),
-              nSuccess)
+              kOtherSuccess)
         << "failed to copy file";
-    ASSERT_EQ(compareSize(sOutputUrl.c_str(), nInputFileSize), nSuccess)
+    ASSERT_EQ(compareSize(sOutputUrl.c_str(), nInputFileSize), kOtherSuccess)
         << "input file and output file sizes are different";
     driver_remove(sOutputUrl.c_str());
-    ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), nFalse)
+    ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kFalse)
         << "failed to remove newly created file";
   }
 
   cout << "Copy to local " << sInputUrl << " to " << sLocalFilePath << endl;
   ASSERT_EQ(driver_copyToLocal(sInputUrl.c_str(), sLocalFilePath.c_str()),
-            nSuccess)
+            kOtherSuccess)
       << "failed to copy file";
 
   cout << "Copy from local " << sLocalFilePath << " to " << sOutputUrl << endl;
   ASSERT_EQ(driver_copyFromLocal(sLocalFilePath.c_str(), sOutputUrl.c_str()),
-            nSuccess)
+            kOtherSuccess)
       << "failed to copy file";
-  ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), nTrue)
+  ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kTrue)
       << sOutputUrl << " is missing";
   driver_remove(sOutputUrl.c_str());
-  ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), nFalse)
+  ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kFalse)
       << "failed to remove newly created file";
 }
 
@@ -108,34 +108,34 @@ int CopyFile(const char *sInputFileUrl, const char *sOutputFileUrl,
   void *fileinput = driver_fopen(sInputFileUrl, 'r');
   if (fileinput == NULL) {
     printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-    return nFailure;
+    return kOtherFailure;
   }
 
-  int copy_status = nSuccess;
+  int copy_status = kOtherSuccess;
   void *fileoutput = driver_fopen(sOutputFileUrl, 'w');
   if (fileoutput == NULL) {
     printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-    copy_status = nFailure;
+    copy_status = kOtherFailure;
   }
 
-  if (copy_status == nSuccess) {
+  if (copy_status == kOtherSuccess) {
     // Reads the file by steps of nBufferSize and writes to the output file at
     // each step
     char *buffer = new char[nBufferSize + 1]();
     long long int sizeRead = nBufferSize;
     long long int sizeWrite;
     driver_fseek(fileinput, 0, SEEK_SET);
-    while (sizeRead == (long long int)nBufferSize && copy_status == nSuccess) {
+    while (sizeRead == (long long int)nBufferSize && copy_status == kOtherSuccess) {
       sizeRead = driver_fread(buffer, sizeof(char), nBufferSize, fileinput);
       if (sizeRead == -1) {
-        copy_status = nFailure;
+        copy_status = kOtherFailure;
         printf("error while reading %s : %s\n", sInputFileUrl,
                driver_getlasterror());
       } else {
         sizeWrite =
             driver_fwrite(buffer, sizeof(char), (size_t)sizeRead, fileoutput);
         if (sizeWrite == -1) {
-          copy_status = nFailure;
+          copy_status = kOtherFailure;
           printf("error while writing %s : %s\n", sOutputFileUrl,
                  driver_getlasterror());
         }
@@ -157,17 +157,17 @@ int CopyFileWithFseek(const char *sInputFileUrl, const char *sOutputFileUrl,
   void *fileinput = driver_fopen(sInputFileUrl, 'r');
   if (fileinput == NULL) {
     printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-    return nFailure;
+    return kOtherFailure;
   }
 
-  int copy_status = nSuccess;
+  int copy_status = kOtherSuccess;
   void *fileoutput = driver_fopen(sOutputFileUrl, 'w');
   if (fileoutput == NULL) {
     printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-    copy_status = nFailure;
+    copy_status = kOtherFailure;
   }
 
-  if (copy_status == nSuccess) {
+  if (copy_status == kOtherSuccess) {
     // Reads the file by steps of nBufferSize and writes to the output file at
     // each step
     char *buffer = new char[nBufferSize + 1]();
@@ -175,19 +175,19 @@ int CopyFileWithFseek(const char *sInputFileUrl, const char *sOutputFileUrl,
     long long int sizeWrite;
     long long int cummulativeRead = 0;
     driver_fseek(fileinput, 0, SEEK_SET);
-    while (sizeRead == (long long int)nBufferSize && copy_status == nSuccess) {
+    while (sizeRead == (long long int)nBufferSize && copy_status == kOtherSuccess) {
       driver_fseek(fileinput, cummulativeRead, SEEK_SET);
       sizeRead = driver_fread(buffer, sizeof(char), nBufferSize, fileinput);
       cummulativeRead += sizeRead;
       if (sizeRead == -1) {
-        copy_status = nFailure;
+        copy_status = kOtherFailure;
         printf("error while reading %s : %s\n", sInputFileUrl,
                driver_getlasterror());
       } else {
         sizeWrite =
             driver_fwrite(buffer, sizeof(char), (size_t)sizeRead, fileoutput);
         if (sizeWrite == -1) {
-          copy_status = nFailure;
+          copy_status = kOtherFailure;
           printf("error while writing %s : %s\n", sOutputFileUrl,
                  driver_getlasterror());
         }
@@ -212,42 +212,42 @@ int CopyFileWithAppend(const char *sInputFileUrl, const char *sOutputFileUrl,
   void *fileinput = driver_fopen(sInputFileUrl, 'r');
   if (fileinput == NULL) {
     printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-    return nFailure;
+    return kOtherFailure;
   }
 
-  int copy_status = nSuccess;
+  int copy_status = kOtherSuccess;
 
-  if (copy_status == nSuccess) {
+  if (copy_status == kOtherSuccess) {
     // Reads the file by steps of nBufferSize and writes to the output file at
     // each step
     char *buffer = new char[nBufferSize + 1]();
     long long int sizeRead = nBufferSize;
     long long int sizeWrite;
     driver_fseek(fileinput, 0, SEEK_SET);
-    while (sizeRead == (long long int)nBufferSize && copy_status == nSuccess) {
+    while (sizeRead == (long long int)nBufferSize && copy_status == kOtherSuccess) {
       sizeRead = driver_fread(buffer, sizeof(char), nBufferSize, fileinput);
       if (sizeRead == -1) {
-        copy_status = nFailure;
+        copy_status = kOtherFailure;
         printf("error while reading %s : %s\n", sInputFileUrl,
                driver_getlasterror());
       } else {
         void *fileoutput = driver_fopen(sOutputFileUrl, 'a');
         if (fileoutput == NULL) {
           printf("error : %s : %s\n", sInputFileUrl, driver_getlasterror());
-          copy_status = nFailure;
+          copy_status = kOtherFailure;
         }
 
         sizeWrite =
             driver_fwrite(buffer, sizeof(char), (size_t)sizeRead, fileoutput);
         if (sizeWrite == -1) {
-          copy_status = nFailure;
+          copy_status = kOtherFailure;
           printf("error while writing %s : %s\n", sOutputFileUrl,
                  driver_getlasterror());
         }
 
         int closeStatus = driver_fclose(fileoutput);
         if (closeStatus != 0) {
-          copy_status = nFailure;
+          copy_status = kOtherFailure;
           printf("error while closing %s : %s\n", sOutputFileUrl,
                  driver_getlasterror());
         }
@@ -261,18 +261,18 @@ int CopyFileWithAppend(const char *sInputFileUrl, const char *sOutputFileUrl,
 }
 
 int compareSize(const char *sOutputFileUrl, long long int nFilesize) {
-  int compare_status = nSuccess;
+  int compare_status = kOtherSuccess;
   long long int filesize_output = driver_getFileSize(sOutputFileUrl);
   printf("size of %s is %lld\n", sOutputFileUrl, filesize_output);
   if (filesize_output != nFilesize) {
     printf("Sizes of input and output are different\n");
-    compare_status = nFailure;
+    compare_status = kOtherFailure;
   }
   if (driver_fileExists(sOutputFileUrl)) {
     printf("File %s exists\n", sOutputFileUrl);
   } else {
     printf("Something's wrong : %s is missing\n", sOutputFileUrl);
-    compare_status = nFailure;
+    compare_status = kOtherFailure;
   }
   return compare_status;
 }
