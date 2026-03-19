@@ -2,7 +2,7 @@
 
 This repository is dedicated to host components useful for many or all [Khiops](https://github.com/KhiopsML) drivers.
 
-Since the storage drivers must conform to [a common interface](./integrationtests/plugin.hpp), there is a single integration test suite at [integrationtests](./integrationtests/).
+Since the storage drivers must conform to [a common interface](./integrationtests/plugin.hpp), there is a single integration test suite in [integrationtests](./integrationtests/).
 
 Source code shared amongst drivers are in [src](./src).
 
