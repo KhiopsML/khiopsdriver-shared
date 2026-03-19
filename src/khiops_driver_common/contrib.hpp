@@ -170,4 +170,4 @@ inline bool GitignoreGlobMatch(const std::string &text,
 
 } // namespace glob
 } // namespace util
-} // namespace az
+} // namespace khiops_driver_common
