@@ -15,7 +15,7 @@ namespace glob {
 //              https://www.codeproject.com/info/cpol10.aspx
 // returns TRUE if text string matches gitignore-style glob pattern. match is
 // case sensitive
-static bool GitignoreGlobMatch(const std::string &text,
+inline bool GitignoreGlobMatch(const std::string &text,
                                const std::string &glob) {
   // enable dotglob: *. ?, and [] match a . (dotfile) at the begin or after each
   // /
