@@ -9,4 +9,4 @@ Source code shared amongst drivers are in [src](./src).
 
 # Working on the drivers
 
-See [handy_aliases.sh](./handy_aliases.sh) for shell aliases that may be useful when working on the drivers.
+See [khiops_driver_handy_aliases.sh](./khiops_driver_handy_aliases.sh) for shell aliases that may be useful when working on the drivers.
