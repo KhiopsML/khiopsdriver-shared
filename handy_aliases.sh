@@ -15,7 +15,7 @@ alias s3testdbg='STORAGE_DRIVER_TEST_URL_PREFIX=s3://diod-data-di-jupyterhub khi
 # GCS driver aliases
 alias gcsgendbg='khiopsdrivergendbg'
 alias gcsbuilddbg='khiopsdriverbuilddbg'
-alias gcstestdbg='STORAGE_DRIVER_TEST_URL_PREFIX=gs://data-test-khiops-driver-gcs'
+alias gcstestdbg='STORAGE_DRIVER_TEST_URL_PREFIX=gs://data-test-khiops-driver-gcs khiopsdrivertestdbg'
 
 # Azure driver aliases
 alias azgendbg='khiopsdrivergendbg'
