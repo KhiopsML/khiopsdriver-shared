@@ -1,4 +1,3 @@
-#include "logging.hpp"
 #include "util.hpp"
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/ostream_sink.h>
@@ -23,8 +22,11 @@ static shared_ptr<spdlog::logger> logger;
 namespace {
 // Logging lazy initializer
 struct LogInitializer {
-  LogInitializer(string loggername, string loglevelstr, string logfile, bool logtostderr) {
-    spdlog::level::level_enum loglevel = spdlog::level::from_str(loglevelstr);
+  LogInitializer() {
+    spdlog::level::level_enum loglevel = spdlog::level::from_str(khiops_driver_common::util::env::GetEnvVarOrDefault(
+        LOGLEVEL_ENVVARNAME, "off", true));
+    string logfile = khiops_driver_common::util::env::GetEnvVar(LOGFILE_ENVVARNAME,
+                                                         true);
 
     logstring.clear();
     logstringstream = ostringstream("");
@@ -33,19 +35,13 @@ struct LogInitializer {
     stringstreamsink->set_level(spdlog::level::err);
     sinks.push_back(stringstreamsink);
 
-    if (logtostderr) {
-      stderrsink = make_shared<spdlog::sinks::stderr_sink_st>();
-      stderrsink->set_level(loglevel);
-      sinks.push_back(stderrsink);
-    }
-
     if (!logfile.empty()) {
       filesink = make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
       filesink->set_level(loglevel);
       sinks.push_back(filesink);
     }
 
-    logger = make_shared<spdlog::logger>(loggername, sinks.begin(), sinks.end());
+    logger = make_shared<spdlog::logger>(LOGGERNAME, sinks.begin(), sinks.end());
     logger->set_level(spdlog::level::trace); // Let the sinks choose the log level.
     spdlog::register_logger(logger);
   }
@@ -63,8 +59,8 @@ struct LogInitializer {
 
 } // anonymous namespace
 
-const shared_ptr<spdlog::logger> &getLogger(string loggername, string loglevelstr, string logfile, bool logtostderr) {
-  static LogInitializer _(loggername, loglevelstr, logfile, logtostderr);
+const shared_ptr<spdlog::logger> &getLogger() {
+  static LogInitializer _;
   return logger;
 }
 

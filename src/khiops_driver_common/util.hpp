@@ -15,7 +15,7 @@ A collection of utilities.
 #include <regex>
 #include <string>
 #include <vector>
-#include "logging.hpp"
+#include "khiops_driver_common/logging.hpp"
 
 namespace khiops_driver_common {
 namespace util {
@@ -99,18 +99,18 @@ inline std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging = 
   char *sValue = getenv(sVarName.c_str());
   if (!sValue) {
     if (!bForbidLogging) {
-      khiops_driver_common::logging::getLogger("drivercommon", loglevel, logfile, false)->debug("Environment variable {} is not set.", sVarName);
+      khiops_driver_common::logging::getLogger()->debug("Environment variable {} is not set.", sVarName);
     }
     return "";
   }
   if (strlen(sValue) == 0ULL) {
     if (!bForbidLogging) {
-      khiops_driver_common::logging::getLogger("drivercommon", loglevel, logfile, false)->debug("Environment variable {} is empty.", sVarName);
+      khiops_driver_common::logging::getLogger()->debug("Environment variable {} is empty.", sVarName);
     }
     return "";
   }
   if (!bForbidLogging) {
-    khiops_driver_common::logging::getLogger("drivercommon", loglevel, logfile, false)->debug("Environment variable {} is set to: {}.", sVarName,
+    khiops_driver_common::logging::getLogger()->debug("Environment variable {} is set to: {}.", sVarName,
                        sValue);
   }
   return sValue;

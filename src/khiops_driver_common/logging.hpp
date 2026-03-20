@@ -7,7 +7,7 @@
 namespace khiops_driver_common {
 namespace logging {
 
-const std::shared_ptr<spdlog::logger> &getLogger(std::string loggername, std::string loglevelstr, std::string logfile, bool logtostderr);
+const std::shared_ptr<spdlog::logger> &getLogger();
 const std::string &getLastError();
 
 } // namespace logging
