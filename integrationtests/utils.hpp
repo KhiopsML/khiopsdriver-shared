@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <cstdlib>
+#include <fstream>
 
 enum struct StorageType { BLOB, FILE };
 
@@ -41,4 +42,10 @@ static void CopyFile(std::string source, std::string dest) {
   ASSERT_EQ(driver_fclose(sourceptr), kSuccess) << "Could not close source file: " << source << "'.";
   ASSERT_EQ(driver_fileExists(source.c_str()), kTrue) << "Source file does not exist anymore: '" << source << "'.";
   ASSERT_EQ(driver_fileExists(dest.c_str()), kTrue) << "Destination file has not been created: '" << dest << "'.";
+}
+
+static bool LocalFileExists(const std::string &filename) {
+  std::ifstream ifstream(filename);
+  bool file_exists = ifstream.is_open();
+  return file_exists;
 }
