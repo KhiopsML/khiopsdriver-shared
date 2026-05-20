@@ -3,25 +3,30 @@
 #endif
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <spdlog/spdlog.h>
 #include "khiops_driver_common/driver.h"
 #include "khiops_driver_common/backend.hpp"
 #include "khiops_driver_common/returnval.hpp"
+#include "khiops_driver_common/logging.hpp"
+#include "khiops_driver_common/filestreamregistry.hpp"
 
 // Compiling this file means we are currently compiling the driver, so export public functions.
 #define CLOUD_STORAGE_DRIVER_EXPORT
 
 using namespace std;
 using namespace khiops_driver_common::return_values;
+using namespace khiops_driver_common::logging;
+using namespace khiops_driver_common::filestream;
+using khiops_driver_common::backend::Backend;
 
-// Reference GetLogger provided by the driver.
-extern const spdlog::Logger *GetLogger();
-// Reference backend provided by the driver.
+// Reference to the backend object provided by the driver.
 extern const Backend backend;
 
 // Global state
 struct State {
     bool is_driver_initialized;
+    FileStreamRegistry file_stream_registry;
 };
 static State *GetState() {
     static unique_ptr<State> state = nullptr;
@@ -37,9 +42,9 @@ static State *GetState() {
     try { \
         stmt \
     } catch (const exception &exc) { \
-        getLogger()->error("An exception has been raised: {}", exc.what()); \
+        GetLogger()->error("An exception has been raised: {}", exc.what()); \
     } catch (...) { \
-        getLogger()->error("An non-exception value has been raised as an exception."); \
+        GetLogger()->error("An non-exception value has been raised as an exception."); \
     }
 
 // Function to check that the driver has been initialized and log an error if it is not the case
@@ -71,9 +76,6 @@ static bool CheckNotNull(const void *arg, const char *param, const char *func) {
         return false;
     }
 }
-
-/*** Error strings ***/
-static const char *ERR_INVALID_SEEK_ORIGIN = "Tried to seek from invalid origin '{}'.";
 
 
 
@@ -224,22 +226,29 @@ long long int driver_getFileSize(const char *filename) {
 void *driver_fopen(const char *filename, char mode) {
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
-        void *filestream;
         if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)) {
+            shared_ptr<FileStream> stream = make_shared();
+            void *handle = static_cast<void *>(stream.get());
             switch (mode) {
                 case 'r':
-                    if (backend.FOpenForReading(&filestream, filename) == 0) {
-                        return filestream;
+                    stream->mode = FileStream::Mode::READ;
+                    if (backend.FOpen(stream.get(), filename) == 0) {
+                        GetState()->streams.emplace(handle, stream);
+                        return handle;
                     }
                     break;
                 case 'w':
-                    if (backend.FOpenForWriting(&filestream, filename) == 0) {
-                        return filestream;
+                    stream->mode = FileStream::Mode::WRITE;
+                    if (backend.FOpen(stream.get(), filename) == 0) {
+                        GetState()->streams.emplace(handle, stream);
+                        return handle;
                     }
                     break;
                 case 'a':
-                    if (backend.FOpenForAppending(&filestream, filename) == 0) {
-                        return filestream;
+                    stream->mode = FileStream::Mode::APPEND;
+                    if (backend.FOpen(stream.get(), filename) == 0) {
+                        GetState()->streams.emplace(handle, stream);
+                        return handle;
                     }
                     break;
                 default:
@@ -255,6 +264,7 @@ int driver_fclose(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
         if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__) && backend.FClose(stream) == 0) {
+            GetState()->streams.erase(stream);
             return kSuccess;
         }
     })
@@ -265,20 +275,39 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
     CATCH_ALL({
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
         size_t nread;
-        if (
-            CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
-            && backend.FRead(&nread, ptr, size, count, stream) == 0 && nread != 0ULL
-        ) {
-            return static_cast<long long int>(nread);
+        if (CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)) {
+            FileStream *file_stream = GetState()->file_stream_registry.get_reader_stream(stream);
+            if (file_stream != nullptr && backend.FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL) {
+                return static_cast<long long int>(nread);
+            }
         }
     })
     return kFailure;
 }
 
 int driver_fseek(void *stream, long long int offset, int whence) {
+    CATCH_ALL({
+        GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
+        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__)) {
+            if (0 <= whence && whence <= 2) {
+                if (backend.FSeek(stream, offset, whence) == 0) {
+                    return kSuccess;
+                }
+            } else {
+                GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
+            }
+        }
+    })
+    return kFailure;
 }
 
 const char *driver_getlasterror() {
+    CATCH_ALL({
+        GetLogger()->info("Retrieving last error...");
+        string last_error = GetLastError();
+        return last_error.empty() ? nullptr : last_error.c_str();
+    })
+    return "Error while trying to fetch last error.";
 }
 
 long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *stream) {

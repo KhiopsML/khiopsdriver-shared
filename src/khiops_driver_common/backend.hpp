@@ -2,6 +2,10 @@
 
 #include <string>
 #include <vector>
+#include "khiops_driver_common/filestream.hpp"
+
+namespace khiops_driver_common {
+namespace backend {
 
 struct Backend {
     int (*GetDriverName)(std::string *result);
@@ -14,14 +18,12 @@ struct Backend {
     int (*FileExists)(bool *result, const std::string &sFilePathName);
     int (*DirExists)(bool *result, const std::string &sFilePathName);
     int (*GetFileSize)(size_t *result, const std::string &filename);
-    int (*FOpenForReading)(void **result, const std::string &filename);
-    int (*FOpenForWriting)(void **result, const std::string &filename);
-    int (*FOpenForAppending)(void **result, const std::string &filename);
-    int (*FClose)(void *stream);
-    int (*FRead)(size_t *result, void *ptr, size_t size, size_t count, void *stream);
-    int (*FSeek)(void *stream, long long int offset, int whence);
-    int (*FWrite)(size_t *result, const void *ptr, size_t size, size_t count, void *stream);
-    int (*FFlush)(void *stream);
+    int (*FOpen)(khiops_driver_common::filestream::FileStream *stream, const std::string &filename);
+    int (*FClose)(const khiops_driver_common::filestream::FileStream &stream);
+    int (*FRead)(size_t *result, void *ptr, size_t size, size_t count, const khiops_driver_common::filestream::FileStream &stream);
+    int (*FSeek)(const khiops_driver_common::filestream::FileStream &stream, long long int offset, int whence);
+    int (*FWrite)(size_t *result, const void *ptr, size_t size, size_t count, const khiops_driver_common::filestream::FileStream &stream);
+    int (*FFlush)(const khiops_driver_common::filestream::FileStream &stream);
     int (*Remove)(const std::string &filename);
     int (*Mkdir)(const std::string &pathname);
     int (*Rmdir)(const std::string &pathname);
@@ -31,3 +33,6 @@ struct Backend {
     int (*Concat)(const std::string &destfilename, const std::vector<std::string> &sourcefilenames, size_t sourcefilecount);
     int (*ComposeMultifile)(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames, size_t nSourceFileCount);
 };
+
+}
+}
