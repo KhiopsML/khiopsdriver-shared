@@ -73,7 +73,6 @@ static bool CheckNotNull(const void *arg, const char *param, const char *func) {
 }
 
 /*** Error strings ***/
-static const char *ERR_INVALID_FSTREAM_MODE = "Tried to open file '{}' with invalid mode '{}'.";
 static const char *ERR_INVALID_SEEK_ORIGIN = "Tried to seek from invalid origin '{}'.";
 
 
@@ -226,9 +225,28 @@ void *driver_fopen(const char *filename, char mode) {
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
         void *filestream;
-        if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__) && backend.Fopen(&filestream, filename, mode) == 0) {
-            return filestream;
-         }
+        if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)) {
+            switch (mode) {
+                case 'r':
+                    if (backend.FOpenForReading(&filestream, filename) == 0) {
+                        return filestream;
+                    }
+                    break;
+                case 'w':
+                    if (backend.FOpenForWriting(&filestream, filename) == 0) {
+                        return filestream;
+                    }
+                    break;
+                case 'a':
+                    if (backend.FOpenForAppending(&filestream, filename) == 0) {
+                        return filestream;
+                    }
+                    break;
+                default:
+                    GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
+                    break;
+            }
+        }
     })
     return nullptr;
 }
@@ -236,7 +254,7 @@ void *driver_fopen(const char *filename, char mode) {
 int driver_fclose(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
-        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__) && backend.Fclose(stream) == 0) {
+        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__) && backend.FClose(stream) == 0) {
             return kSuccess;
         }
     })
@@ -249,7 +267,7 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
         size_t nread;
         if (
             CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
-            && backend.Fread(&nread, ptr, size, count, stream) == 0 && nread != 0ULL
+            && backend.FRead(&nread, ptr, size, count, stream) == 0 && nread != 0ULL
         ) {
             return static_cast<long long int>(nread);
         }
