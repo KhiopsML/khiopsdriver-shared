@@ -16,6 +16,7 @@ A collection of utilities.
 #include <string>
 #include <vector>
 #include "khiops_driver_common/logging.hpp"
+#include <spdlog/spdlog.h>
 
 namespace khiops_driver_common {
 namespace util {
@@ -85,35 +86,24 @@ inline bool RandomBool() {
 namespace env {
 
 inline std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging = false) {
-  char *loglevel_cstr, *logfile_cstr;
-  std::string loglevel = "";
-  std::string logfile = "";
+  const spdlog::logger *logger = nullptr;
   if (!bForbidLogging) {
-    if ((loglevel_cstr = getenv("DRIVER_COMMON_LOGLEVEL"))) {
-      loglevel = loglevel_cstr;
-    }
-    if ((logfile_cstr = getenv("DRIVER_COMMON_LOGFILE"))) {
-      logfile = logfile_cstr;
-    }
+    logger = khiops_driver_common::logging::getLogger("DRIVER_COMMON", "DRIVER_COMMON_LOGFILE", "DRIVER_COMMON_LOGLEVEL");
   }
-  char *sValue = getenv(sVarName.c_str());
-  if (!sValue) {
-    if (!bForbidLogging) {
-      khiops_driver_common::logging::getLogger()->debug("Environment variable {} is not set.", sVarName);
+  char *value = getenv(sVarName.c_str());
+  if (value) {
+    if (strlen(sValue) > 0ULL) {
+      if (!bForbidLogging) {
+        logger->debug("Environment variable {} is set to: {}.", sVarName, value);
+      }
+      return value;
+    } else if (!bForbidLogging) {
+      logger->debug("Environment variable {} is empty.", sVarName);
     }
-    return "";
+  } else if (!bForbidLogging) {
+    logger->debug("Environment variable {} is not set.", sVarName);
   }
-  if (strlen(sValue) == 0ULL) {
-    if (!bForbidLogging) {
-      khiops_driver_common::logging::getLogger()->debug("Environment variable {} is empty.", sVarName);
-    }
-    return "";
-  }
-  if (!bForbidLogging) {
-    khiops_driver_common::logging::getLogger()->debug("Environment variable {} is set to: {}.", sVarName,
-                       sValue);
-  }
-  return sValue;
+  return "";
 }
 
 inline std::string GetEnvVarOrDefault(const std::string &sVarName, const std::string &sDefaultValue, bool bForbidLogging = false) {
