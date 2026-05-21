@@ -341,6 +341,13 @@ int driver_remove(const char *filename) {
 }
 
 int driver_mkdir(const char *pathname) {
+    CATCH_ALL({
+        GetLogger()->info("Creating directory at URL {}...", pathname);
+        if (CheckInitialized() && CheckNotNull(pathname, KHIOPS_STR(pathname), __func__) && backend.Rmdir(pathname)) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 int driver_rmdir(const char *pathname) {
