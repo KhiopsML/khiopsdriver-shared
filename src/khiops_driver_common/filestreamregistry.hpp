@@ -8,6 +8,7 @@ namespace khiops_driver_common {
 class FileStreamRegistry {
 public:
     int AddStream(void **handle_result, FileStream &&file_stream);
+    int GetStream(const FileStream **result, void *handle) const;
     int GetReaderStream(const FileStream **result, void *handle) const;
     int GetWriterStream(const FileStream **result, void *handle) const;
     int GetAppenderStream(const FileStream **result, void *handle) const;
@@ -16,7 +17,6 @@ public:
     ~FileStreamRegistry();
 private:
     std::unordered_set<FileStream *> streams;
-    int GetStream(const FileStream **result, void *handle) const;
 };
 
 }

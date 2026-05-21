@@ -247,9 +247,11 @@ void *driver_fopen(const char *filename, char mode) {
 int driver_fclose(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
+        FileStream *file_stream;
         if (
             CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
-            && backend.FClose(static_cast<FileStream *>(stream)) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
+            && GetState()->file_stream_registry.GetStream(&file_stream, stream) == 0
+            && backend.FClose(*file_stream) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
         ) {
             return kSuccess;
         }
@@ -298,6 +300,19 @@ const char *driver_getlasterror() {
 }
 
 long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *stream) {
+    CATCH_ALL({
+        GetLogger()->info("Writing {}x{} bytes from {} to file with handle {}...", size, count, ptr, stream);
+        FileStream *file_stream;
+        size_t nwritten;
+        if (
+            CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
+            && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
+            && backend.FWrite(&nwritten, ptr, size, count, *file_stream) == 0
+        ) {
+            return static_cast<long long int>(nwritten);
+        }
+    })
+    return kFailure;
 }
 
 int driver_fflush(void *stream) {

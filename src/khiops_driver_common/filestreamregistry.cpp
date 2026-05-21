@@ -16,6 +16,17 @@ int FileStreamRegistry::AddStream(void **handle_result, FileStream &&file_stream
     return -1;
 }
 
+int FileStreamRegistry::GetStream(const FileStream **result, void *handle) const {
+    auto it = this->streams.find(static_cast<FileStream *>(handle));
+    if (it != this->streams.end()) {
+        *result = *it;
+        return 0;
+    } else {
+        GetLogger()->error("File stream not found.");
+    }
+    return -1;
+}
+
 int FileStreamRegistry::GetReaderStream(const FileStream **result, void *handle) const {
     if (this->GetStream(result, handle) == 0) {
         if (stream->mode == FileStream::Mode::READ) {
@@ -75,17 +86,6 @@ FileStreamRegistry::~FileStreamRegistry() {
     for (const auto &file_stream : this->streams) {
         delete file_stream;
     }
-}
-
-int FileStreamRegistry::GetStream(const FileStream **result, void *handle) const {
-    auto it = this->streams.find(static_cast<FileStream *>(handle));
-    if (it != this->streams.end()) {
-        *result = *it;
-        return 0;
-    } else {
-        GetLogger()->error("File stream not found.");
-    }
-    return -1;
 }
 
 }
