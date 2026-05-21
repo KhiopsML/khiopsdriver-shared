@@ -316,6 +316,18 @@ long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *st
 }
 
 int driver_fflush(void *stream) {
+    CATCH_ALL({
+        GetLogger()->info("Flushing file with handle {}...", stream);
+        FileStream *file_stream;
+        if (
+            CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
+            && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
+            && backend.FFlush(*file_stream)
+        ) {
+            return kSuccess;
+        }
+    })
+    return kFailure;
 }
 
 int driver_remove(const char *filename) {
