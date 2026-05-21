@@ -331,6 +331,13 @@ int driver_fflush(void *stream) {
 }
 
 int driver_remove(const char *filename) {
+    CATCH_ALL({
+        GetLogger()->info("Removing file at URL {}...", filename);
+        if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__) && backend.Remove(filename) == 0) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 int driver_mkdir(const char *pathname) {
