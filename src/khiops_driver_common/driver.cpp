@@ -404,14 +404,37 @@ int driver_concat(const char *destfilename, const char **sourcefilenames, size_t
             GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
         }
         if (
-            CheckInitialized() && CheckNotNull(destfilename, KHIOPS_STR(destfilename), __func__) && CheckNotNull(sourcefilenames, KHIOPS_STR(sourcefilenames), __func__)
-            && backend.Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0
+            CheckInitialized() && CheckNotNull(destfilename, KHIOPS_STR(destfilename), __func__)
+            && CheckNotNull(sourcefilenames, KHIOPS_STR(sourcefilenames), __func__)
+            && sourcefilecount >= 2
         ) {
-            return kOtherSuccess;
+            if (backend.Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0) {
+                return kOtherSuccess;
+            }
+        } else {
+            GetLogger()->error("Too few files to concatenate.");
         }
     })
     return kOtherFailure;
 }
 
 int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceFilePathNames, size_t nSourceFileCount) {
+    CATCH_ALL({
+        GetLogger()->info("Composing {} files into one multifile {}...", nSourceFileCount, sDestFilePathName);
+        for (size_t i = 0; i < sourcefilecount; i++) {
+            GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
+        }
+        if (
+            CheckInitialized() && CheckNotNull(sDestFilePathName, KHIOPS_STR(sDestFilePathName), __func__)
+            && CheckNotNull(sSourceFilePathNames, KHIOPS_STR(sSourceFilePathNames), __func__)
+            && nSourceFileCount >= 2
+        ) {
+            if (backend.Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) == 0) {
+                return kOtherSuccess;
+            }
+        } else {
+            GetLogger()->error("Too few files to compose a multifile.");
+        }
+    })
+    return kOtherFailure;
 }
