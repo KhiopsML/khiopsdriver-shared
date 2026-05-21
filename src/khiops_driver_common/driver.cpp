@@ -225,34 +225,17 @@ long long int driver_getFileSize(const char *filename) {
 void *driver_fopen(const char *filename, char mode) {
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
+
         if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)) {
             shared_ptr<FileStream> stream = make_shared();
             void *handle = static_cast<void *>(stream.get());
-            switch (mode) {
-                case 'r':
-                    stream->mode = FileStream::Mode::READ;
-                    if (backend.FOpen(stream.get(), filename) == 0) {
-                        GetState()->streams.emplace(handle, stream);
-                        return handle;
-                    }
-                    break;
-                case 'w':
-                    stream->mode = FileStream::Mode::WRITE;
-                    if (backend.FOpen(stream.get(), filename) == 0) {
-                        GetState()->streams.emplace(handle, stream);
-                        return handle;
-                    }
-                    break;
-                case 'a':
-                    stream->mode = FileStream::Mode::APPEND;
-                    if (backend.FOpen(stream.get(), filename) == 0) {
-                        GetState()->streams.emplace(handle, stream);
-                        return handle;
-                    }
-                    break;
-                default:
-                    GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
-                    break;
+            if (FileModeCharToFileStreamMode(&stream->mode, mode) == 0) {
+                if (backend.FOpen(stream.get(), filename) == 0) {
+                    GetState()->streams.emplace(handle, stream);
+                    return handle;
+                }
+            } else {
+                GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
             }
         }
     })
