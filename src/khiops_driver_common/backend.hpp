@@ -2,10 +2,10 @@
 
 #include <string>
 #include <vector>
+#include <spdlog/spdlog.h>
 #include "khiops_driver_common/filestream.hpp"
 
 namespace khiops_driver_common {
-namespace backend {
 
 struct Backend {
     int (*GetDriverName)(std::string *result);
@@ -32,7 +32,8 @@ struct Backend {
     int (*CopyFromLocal)(const std::string &sourcefilename, const std::string &destfilename);
     int (*Concat)(const std::string &destfilename, const std::vector<std::string> &sourcefilenames, size_t sourcefilecount);
     int (*ComposeMultifile)(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames, size_t nSourceFileCount);
+
+    const spdlog::logger *(*GetLogger)();
 };
 
-}
 }

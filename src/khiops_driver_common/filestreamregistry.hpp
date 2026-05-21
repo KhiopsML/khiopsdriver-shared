@@ -4,7 +4,6 @@
 #include "khiops_driver_common/filestream.hpp"
 
 namespace khiops_driver_common {
-namespace filestream {
 
 class FileStreamRegistry {
 public:
@@ -16,5 +15,4 @@ private:
     const FileStream *get_stream(void *handle) const;
 };
 
-}
 }

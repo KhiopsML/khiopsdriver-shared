@@ -21,7 +21,6 @@ static shared_ptr<spdlog::logger> logger;
 
 
 namespace khiops_driver_common {
-namespace logging {
 
 const spdlog::logger *GetLogger(const std::string &logger_name, const string &logfile_envvar_name, const string &loglevel_envvar_name) {
   static unique_ptr<spdlog::logger> logger = nullptr;
@@ -59,5 +58,4 @@ string GetLastError() {
   return logstring;
 }
 
-} // namespace logging
 } // namespace khiops_driver_common

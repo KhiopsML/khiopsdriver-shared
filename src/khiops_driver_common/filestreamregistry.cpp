@@ -1,10 +1,9 @@
 #include "khiops_driver_common/filestreamregistry.hpp"
-#include "khiops_driver_common/logging.hpp"
+#include "khiops_driver_common/backendimport.hpp"
 
-using khiops_driver_common::logging::GetLogger;
+using khiops_driver_common::GetLogger;
 
 namespace khiops_driver_common {
-namespace filestream {
 
 const FileStream *FileStreamRegistry::get_reader_stream(void *handle) const {
     FileStream *stream = this->get_stream(handle);
@@ -43,5 +42,4 @@ const FileStream *FileStreamRegistry::get_stream(void *handle) const {
     }
 }
 
-}
 }

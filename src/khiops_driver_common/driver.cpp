@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 #include "khiops_driver_common/driver.h"
 #include "khiops_driver_common/backend.hpp"
+#include "khiops_driver_common/backendimport.hpp"
 #include "khiops_driver_common/returnval.hpp"
 #include "khiops_driver_common/logging.hpp"
 #include "khiops_driver_common/filestreamregistry.hpp"
@@ -15,13 +16,19 @@
 #define CLOUD_STORAGE_DRIVER_EXPORT
 
 using namespace std;
-using namespace khiops_driver_common::return_values;
-using namespace khiops_driver_common::logging;
-using namespace khiops_driver_common::filestream;
-using khiops_driver_common::backend::Backend;
+using namespace khiops_driver_common;
 
-// Reference to the backend object provided by the driver.
-extern const Backend backend;
+// Macro that must be used in all public functions to avoid raising exceptions
+#define CATCH_ALL(stmt) \
+    try { \
+        stmt \
+    } catch (const exception &exc) { \
+        GetLogger()->error("An exception has been raised: {}", exc.what()); \
+    } catch (...) { \
+        GetLogger()->error("An non-exception value has been raised as an exception."); \
+    }
+
+namespace khiops_driver_common {
 
 // Global state
 struct State {
@@ -36,16 +43,6 @@ static State *GetState() {
     }
     return state.get();
 }
-
-// Macro that must be used in all public functions to avoid raising exceptions
-#define CATCH_ALL(stmt) \
-    try { \
-        stmt \
-    } catch (const exception &exc) { \
-        GetLogger()->error("An exception has been raised: {}", exc.what()); \
-    } catch (...) { \
-        GetLogger()->error("An non-exception value has been raised as an exception."); \
-    }
 
 // Function to check that the driver has been initialized and log an error if it is not the case
 static bool CheckInitialized() {
@@ -76,6 +73,8 @@ static bool CheckNotNull(const void *arg, const char *param, const char *func) {
         return false;
     }
 }
+
+} // namespace khiops_driver_common
 
 
 
