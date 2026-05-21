@@ -18,7 +18,7 @@ struct Backend {
     int (*FileExists)(bool *result, const std::string &sFilePathName);
     int (*DirExists)(bool *result, const std::string &sFilePathName);
     int (*GetFileSize)(size_t *result, const std::string &filename);
-    int (*FOpen)(khiops_driver_common::filestream::FileStream *stream, const std::string &filename);
+    int (*FOpen)(khiops_driver_common::filestream::FileStream &stream, const std::string &filename);
     int (*FClose)(const khiops_driver_common::filestream::FileStream &stream);
     int (*FRead)(size_t *result, void *ptr, size_t size, size_t count, const khiops_driver_common::filestream::FileStream &stream);
     int (*FSeek)(const khiops_driver_common::filestream::FileStream &stream, long long int offset, int whence);

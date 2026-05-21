@@ -225,19 +225,20 @@ long long int driver_getFileSize(const char *filename) {
 void *driver_fopen(const char *filename, char mode) {
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
-
-        if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)) {
-            FileStream stream;
-            if (FileModeCharToFileStreamMode(&stream->mode, mode) == 0) {
-                if (backend.FOpen(&stream, filename) == 0) {
-                    void *handle;
-                    if (GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
-                        return handle;
-                    }
-                }
-            } else {
-                GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
+        FileStream stream;
+        void *handle;
+        if (
+            CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)
+            && FileModeCharToFileStreamMode(&stream->mode, mode) == 0
+        ) {
+            if (
+                backend.FOpen(stream, filename) == 0
+                && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0
+            ) {
+                return handle;
             }
+        } else {
+            GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
         }
     })
     return nullptr;
@@ -259,12 +260,14 @@ int driver_fclose(void *stream) {
 long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
     CATCH_ALL({
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
+        FileStream *file_stream;
         size_t nread;
-        if (CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)) {
-            FileStream *file_stream = GetState()->file_stream_registry.GetReaderStream(stream);
-            if (file_stream != nullptr && backend.FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL) {
-                return static_cast<long long int>(nread);
-            }
+        if (
+            CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
+            && GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0
+            && backend.FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL
+        ) {
+            return static_cast<long long int>(nread);
         }
     })
     return kFailure;
