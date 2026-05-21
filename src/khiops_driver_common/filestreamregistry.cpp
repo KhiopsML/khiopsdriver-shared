@@ -49,6 +49,17 @@ int FileStreamRegistry::GetAppenderStream(const FileStream **result, void *handl
     return -1;
 }
 
+int FileStreamRegistry::GetWriterOrAppenderStream(const FileStream **result, void *handle) const {
+    if (this->GetStream(result, handle) == 0) {
+        if (stream->mode == FileStream::Mode::WRITE || stream->mode == FileStream::Mode::APPEND) {
+            return 0;
+        } else {
+            GetLogger()->error("File stream exists but is not a writer stream nor an appender stream.");
+        }
+    }
+    return -1;
+}
+
 int FileStreamRegistry::RemoveStream(void *handle) {
     FileStream *file_stream = static_cast<FileStream *>(handle);
     if (this->streams.erase(file_stream) == 1ULL) {

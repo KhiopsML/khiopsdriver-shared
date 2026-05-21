@@ -276,14 +276,13 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
 int driver_fseek(void *stream, long long int offset, int whence) {
     CATCH_ALL({
         GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
-        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__)) {
-            if (0 <= whence && whence <= 2) {
-                if (backend.FSeek(stream, offset, whence) == 0) {
-                    return kSuccess;
-                }
-            } else {
-                GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
+        FileStream *file_stream;
+        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__) && 0 <= whence && whence <= 2) {
+            if (GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0 && backend.FSeek(*file_stream, offset, whence) == 0) {
+                return kSuccess;
             }
+        } else {
+            GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
         }
     })
     return kFailure;

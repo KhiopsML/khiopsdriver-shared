@@ -11,6 +11,7 @@ public:
     int GetReaderStream(const FileStream **result, void *handle) const;
     int GetWriterStream(const FileStream **result, void *handle) const;
     int GetAppenderStream(const FileStream **result, void *handle) const;
+    int GetWriterOrAppenderStream(const FileStream **result, void *handle) const;
     int RemoveStream(void *handle);
     ~FileStreamRegistry();
 private:
