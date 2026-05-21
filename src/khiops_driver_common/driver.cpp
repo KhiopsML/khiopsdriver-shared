@@ -246,8 +246,10 @@ void *driver_fopen(const char *filename, char mode) {
 int driver_fclose(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
-        if (CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__) && backend.FClose(stream) == 0) {
-            GetState()->streams.erase(stream);
+        if (
+            CheckInitialized() && CheckNotNull(stream, KHIOPS_STR(stream), __func__)
+            && backend.FClose(static_cast<FileStream *>(stream)) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
+        ) {
             return kSuccess;
         }
     })
