@@ -372,9 +372,29 @@ long long int driver_diskFreeSpace(const char *filename) {
 }
 
 int driver_copyToLocal(const char *sourcefilename, const char *destfilename) {
+    CATCH_ALL({
+        GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
+        if (
+            CheckInitialized() && CheckNotNull(sourcefilename, KHIOPS_STR(sourcefilename), __func__) && CheckNotNull(destfilename, KHIOPS_STR(destfilename), __func__)
+            && backend.CopyToLocal(sourcefilename, destfilename) == 0
+        ) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
+    CATCH_ALL({
+        GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
+        if (
+            CheckInitialized() && CheckNotNull(sourcefilename, KHIOPS_STR(sourcefilename), __func__) && CheckNotNull(destfilename, KHIOPS_STR(destfilename), __func__)
+            && backend.CopyFromLocal(sourcefilename, destfilename) == 0
+        ) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 int driver_concat(const char *destfilename, const char **sourcefilenames, size_t sourcefilecount) {
