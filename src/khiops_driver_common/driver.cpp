@@ -227,12 +227,13 @@ void *driver_fopen(const char *filename, char mode) {
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
 
         if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__)) {
-            shared_ptr<FileStream> stream = make_shared();
-            void *handle = static_cast<void *>(stream.get());
+            FileStream stream;
             if (FileModeCharToFileStreamMode(&stream->mode, mode) == 0) {
-                if (backend.FOpen(stream.get(), filename) == 0) {
-                    GetState()->streams.emplace(handle, stream);
-                    return handle;
+                if (backend.FOpen(&stream, filename) == 0) {
+                    void *handle;
+                    if (GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
+                        return handle;
+                    }
                 }
             } else {
                 GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
@@ -258,7 +259,7 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
         size_t nread;
         if (CheckInitialized() && CheckNotNull(ptr, KHIOPS_STR(ptr), __func__) && CheckNotNull(stream, KHIOPS_STR(stream), __func__)) {
-            FileStream *file_stream = GetState()->file_stream_registry.get_reader_stream(stream);
+            FileStream *file_stream = GetState()->file_stream_registry.GetReaderStream(stream);
             if (file_stream != nullptr && backend.FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL) {
                 return static_cast<long long int>(nread);
             }

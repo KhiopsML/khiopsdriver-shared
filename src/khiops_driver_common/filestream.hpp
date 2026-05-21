@@ -8,6 +8,10 @@ struct FileStream {
     FileStream():
         mode(Mode::NONE)
     {}
+
+    FileStream(FileStream &&source):
+        mode(source.mode)
+    {}
 };
 
 int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode) {

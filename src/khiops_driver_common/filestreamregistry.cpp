@@ -5,41 +5,76 @@ using khiops_driver_common::GetLogger;
 
 namespace khiops_driver_common {
 
-const FileStream *FileStreamRegistry::get_reader_stream(void *handle) const {
-    FileStream *stream = this->get_stream(handle);
-    if (stream->mode == FileStream::Mode::READ) {
-        return stream;
+int FileStreamRegistry::AddStream(void **handle_result, FileStream &&file_stream) {
+    auto insertion_result = this->streams.insert(new FileStream(file_stream));
+    if (insertion_result.second) {
+        *handle_result = static_cast<void *>(*insertion_result.first);
+        return 0;
     } else {
-        GetLogger()->error("File stream with handle '{}' exists but is not a reader stream.", handle);
+        GetLogger()->error("Failed to register file stream.");
+    }
+    return -1;
+}
+
+int FileStreamRegistry::GetReaderStream(const FileStream **result, void *handle) const {
+    if (this->GetStream(result, handle) == 0) {
+        if (stream->mode == FileStream::Mode::READ) {
+            return 0;
+        } else {
+            GetLogger()->error("File stream exists but is not a reader stream.");
+        }
+    }
+    return -1;
+}
+
+int FileStreamRegistry::GetWriterStream(const FileStream **result, void *handle) const {
+    if (this->GetStream(result, handle) == 0) {
+        if (stream->mode == FileStream::Mode::WRITE) {
+            return 0;
+        } else {
+            GetLogger()->error("File stream exists but is not a writer stream.");
+        }
+    }
+    return -1;
+}
+
+int FileStreamRegistry::GetAppenderStream(const FileStream **result, void *handle) const {
+    if (this->GetStream(result, handle) == 0) {
+        if (stream->mode == FileStream::Mode::APPEND) {
+            return 0;
+        } else {
+            GetLogger()->error("File stream exists but is not an appender stream.");
+        }
+    }
+    return -1;
+}
+
+int FileStreamRegistry::RemoveStream(void *handle) {
+    FileStream *file_stream = static_cast<FileStream *>(handle);
+    if (this->streams.erase(file_stream) == 1ULL) {
+        delete file_stream;
+        return 0;
+    } else {
+        GetLogger()->error("Failed to unregister file stream.");
+    }
+    return -1;
+}
+
+FileStreamRegistry::~FileStreamRegistry() {
+    for (const auto &file_stream : this->streams) {
+        delete file_stream;
     }
 }
 
-const FileStream *FileStreamRegistry::get_writer_stream(void *handle) const {
-    FileStream *stream = this->get_stream(handle);
-    if (stream->mode == FileStream::Mode::WRITE) {
-        return stream;
+int FileStreamRegistry::GetStream(const FileStream **result, void *handle) const {
+    auto it = this->streams.find(static_cast<FileStream *>(handle));
+    if (it != this->streams.end()) {
+        *result = *it;
+        return 0;
     } else {
-        GetLogger()->error("File stream with handle '{}' exists but is not a writer stream.", handle);
+        GetLogger()->error("File stream not found.");
     }
-}
-
-const FileStream *FileStreamRegistry::get_appender_stream(void *handle) const {
-    FileStream *stream = this->get_stream(handle);
-    if (stream->mode == FileStream::Mode::APPEND) {
-        return stream;
-    } else {
-        GetLogger()->error("File stream with handle '{}' exists but is not an appender stream.", handle);
-    }
-}
-
-const FileStream *FileStreamRegistry::get_stream(void *handle) const {
-    auto it = streams.find(handle);
-    if (it != streams.end()) {
-        return &it->second;
-    } else {
-        GetLogger()->error("File stream with handle '{}' not found.", handle);
-        return nullptr;
-    }
+    return -1;
 }
 
 }

@@ -1,18 +1,21 @@
 #pragma once
 
-#include <unordered_map>
+#include <unordered_set>
 #include "khiops_driver_common/filestream.hpp"
 
 namespace khiops_driver_common {
 
 class FileStreamRegistry {
 public:
-    const FileStream *get_reader_stream(void *handle) const;
-    const FileStream *get_writer_stream(void *handle) const;
-    const FileStream *get_appender_stream(void *handle) const;
+    int AddStream(void **handle_result, FileStream &&file_stream);
+    int GetReaderStream(const FileStream **result, void *handle) const;
+    int GetWriterStream(const FileStream **result, void *handle) const;
+    int GetAppenderStream(const FileStream **result, void *handle) const;
+    int RemoveStream(void *handle);
+    ~FileStreamRegistry();
 private:
-    std::unordered_map<void *, FileStream> streams;
-    const FileStream *get_stream(void *handle) const;
+    std::unordered_set<FileStream *> streams;
+    int GetStream(const FileStream **result, void *handle) const;
 };
 
 }
