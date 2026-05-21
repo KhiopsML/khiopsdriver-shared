@@ -343,7 +343,7 @@ int driver_remove(const char *filename) {
 int driver_mkdir(const char *pathname) {
     CATCH_ALL({
         GetLogger()->info("Creating directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, KHIOPS_STR(pathname), __func__) && backend.Rmdir(pathname)) {
+        if (CheckInitialized() && CheckNotNull(pathname, KHIOPS_STR(pathname), __func__) && backend.Mkdir(pathname) == 0) {
             return kOtherSuccess;
         }
     })
@@ -351,9 +351,24 @@ int driver_mkdir(const char *pathname) {
 }
 
 int driver_rmdir(const char *pathname) {
+    CATCH_ALL({
+        GetLogger()->info("Removing directory at URL {}...", pathname);
+        if (CheckInitialized() && CheckNotNull(pathname, KHIOPS_STR(pathname), __func__) && backend.Rmdir(pathname) == 0) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 long long int driver_diskFreeSpace(const char *filename) {
+    CATCH_ALL({
+        GetLogger()->info("Retrieving free disk space at URL {}...", filename);
+        size_t free_space;
+        if (CheckInitialized() && CheckNotNull(filename, KHIOPS_STR(filename), __func__) && backend.DiskFreeSpace(&free_space, filename) == 0) {
+            return free_space;
+        }
+    })
+    return kFailure;
 }
 
 int driver_copyToLocal(const char *sourcefilename, const char *destfilename) {
