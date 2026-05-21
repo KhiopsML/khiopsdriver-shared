@@ -18,12 +18,12 @@ struct Backend {
     int (*FileExists)(bool *result, const std::string &sFilePathName);
     int (*DirExists)(bool *result, const std::string &sFilePathName);
     int (*GetFileSize)(size_t *result, const std::string &filename);
-    int (*FOpen)(khiops_driver_common::filestream::FileStream &stream, const std::string &filename);
-    int (*FClose)(const khiops_driver_common::filestream::FileStream &stream);
-    int (*FRead)(size_t *result, void *ptr, size_t size, size_t count, khiops_driver_common::filestream::FileStream &stream);
-    int (*FSeek)(khiops_driver_common::filestream::FileStream &stream, long long int offset, int whence);
-    int (*FWrite)(size_t *result, const void *ptr, size_t size, size_t count, const khiops_driver_common::filestream::FileStream &stream);
-    int (*FFlush)(const khiops_driver_common::filestream::FileStream &stream);
+    int (*FOpen)(khiops_driver_common::FileStream &stream, const std::string &filename);
+    int (*FClose)(const khiops_driver_common::FileStream &stream);
+    int (*FRead)(size_t *result, void *ptr, size_t size, size_t count, khiops_driver_common::FileStream &stream);
+    int (*FSeek)(khiops_driver_common::FileStream &stream, long long int offset, int whence);
+    int (*FWrite)(size_t *result, const void *ptr, size_t size, size_t count, const khiops_driver_common::FileStream &stream);
+    int (*FFlush)(const khiops_driver_common::FileStream &stream);
     int (*Remove)(const std::string &filename);
     int (*Mkdir)(const std::string &pathname);
     int (*Rmdir)(const std::string &pathname);
@@ -33,7 +33,10 @@ struct Backend {
     int (*Concat)(const std::string &destfilename, const std::vector<std::string> &sourcefilenames);
     int (*ComposeMultifile)(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames);
 
-    const spdlog::logger *(*GetLogger)();
+    spdlog::logger *(*GetLogger)();
 };
+
+// This function must be provided by the driver.
+const Backend *GetBackend();
 
 }

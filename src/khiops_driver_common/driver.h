@@ -1,7 +1,5 @@
 #pragma once
 
-#define KHIOPS_STR(s) #s
-
 #include <cstdlib>
 #include <sys/types.h>
 

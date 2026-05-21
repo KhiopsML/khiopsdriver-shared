@@ -14,7 +14,7 @@ struct FileStream {
     {}
 };
 
-int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode) {
+inline int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode) {
     if (mode == 'r') {
         *result = FileStream::Mode::READ;
     } else if (mode == 'w') {

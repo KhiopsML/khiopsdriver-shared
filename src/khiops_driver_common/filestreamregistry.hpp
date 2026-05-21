@@ -8,11 +8,11 @@ namespace khiops_driver_common {
 class FileStreamRegistry {
 public:
     int AddStream(void **handle_result, FileStream &&file_stream);
-    int GetStream(const FileStream **result, void *handle) const;
-    int GetReaderStream(const FileStream **result, void *handle) const;
-    int GetWriterStream(const FileStream **result, void *handle) const;
-    int GetAppenderStream(const FileStream **result, void *handle) const;
-    int GetWriterOrAppenderStream(const FileStream **result, void *handle) const;
+    int GetStream(FileStream **result, void *handle) const;
+    int GetReaderStream(FileStream **result, void *handle) const;
+    int GetWriterStream(FileStream **result, void *handle) const;
+    int GetAppenderStream(FileStream **result, void *handle) const;
+    int GetWriterOrAppenderStream(FileStream **result, void *handle) const;
     int RemoveStream(void *handle);
     ~FileStreamRegistry();
 private:

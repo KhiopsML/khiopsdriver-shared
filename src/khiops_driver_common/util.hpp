@@ -86,22 +86,18 @@ inline bool RandomBool() {
 namespace env {
 
 inline std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging = false) {
-  const spdlog::logger *logger = nullptr;
-  if (!bForbidLogging) {
-    logger = khiops_driver_common::logging::getLogger("DRIVER_COMMON", "DRIVER_COMMON_LOGFILE", "DRIVER_COMMON_LOGLEVEL");
-  }
   char *value = getenv(sVarName.c_str());
   if (value) {
-    if (strlen(sValue) > 0ULL) {
+    if (strlen(value) > 0ULL) {
       if (!bForbidLogging) {
-        logger->debug("Environment variable {} is set to: {}.", sVarName, value);
+        khiops_driver_common::GetLogger()->debug("Environment variable {} is set to: {}.", sVarName, value);
       }
       return value;
     } else if (!bForbidLogging) {
-      logger->debug("Environment variable {} is empty.", sVarName);
+      khiops_driver_common::GetLogger()->debug("Environment variable {} is empty.", sVarName);
     }
   } else if (!bForbidLogging) {
-    logger->debug("Environment variable {} is not set.", sVarName);
+    khiops_driver_common::GetLogger()->debug("Environment variable {} is not set.", sVarName);
   }
   return "";
 }
