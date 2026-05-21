@@ -30,8 +30,8 @@ struct Backend {
     int (*DiskFreeSpace)(size_t *result, const std::string &filename);
     int (*CopyToLocal)(const std::string &sourcefilename, const std::string &destfilename);
     int (*CopyFromLocal)(const std::string &sourcefilename, const std::string &destfilename);
-    int (*Concat)(const std::string &destfilename, const std::vector<std::string> &sourcefilenames, size_t sourcefilecount);
-    int (*ComposeMultifile)(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames, size_t nSourceFileCount);
+    int (*Concat)(const std::string &destfilename, const std::vector<std::string> &sourcefilenames);
+    int (*ComposeMultifile)(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames);
 
     const spdlog::logger *(*GetLogger)();
 };

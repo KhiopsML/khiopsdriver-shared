@@ -398,6 +398,19 @@ int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
 }
 
 int driver_concat(const char *destfilename, const char **sourcefilenames, size_t sourcefilecount) {
+    CATCH_ALL({
+        GetLogger()->info("Concatenating {} files to URL {}...", sourcefilecount, destfilename);
+        for (size_t i = 0; i < sourcefilecount; i++) {
+            GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
+        }
+        if (
+            CheckInitialized() && CheckNotNull(destfilename, KHIOPS_STR(destfilename), __func__) && CheckNotNull(sourcefilenames, KHIOPS_STR(sourcefilenames), __func__)
+            && backend.Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0
+        ) {
+            return kOtherSuccess;
+        }
+    })
+    return kOtherFailure;
 }
 
 int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceFilePathNames, size_t nSourceFileCount) {
