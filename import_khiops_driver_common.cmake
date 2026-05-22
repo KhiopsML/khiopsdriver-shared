@@ -4,6 +4,7 @@ set(KhiopsDriverCommonSources
     driver.h
     driver.cpp
     filestream.hpp
+    filestream.cpp
     filestreamregistry.hpp
     filestreamregistry.cpp
     logging.hpp
