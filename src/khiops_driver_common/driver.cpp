@@ -253,7 +253,7 @@ void *driver_fopen(const char *filename, char mode) {
         FileStream stream;
         void *handle;
         if (
-            CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__)
+            CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename)
             && FileModeCharToFileStreamMode(&stream.mode, mode) == 0
         ) {
             if (
