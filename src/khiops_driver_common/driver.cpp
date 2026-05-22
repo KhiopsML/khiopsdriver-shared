@@ -85,7 +85,7 @@ static bool CheckNotNull(const void *arg, const char *param, const char *func) {
 const char *driver_getDriverName() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver name...");
-        string driver_name;
+        static string driver_name;
         if (GetBackend()->GetDriverName(&driver_name) == 0) {
             return driver_name.c_str();
         }
@@ -96,7 +96,7 @@ const char *driver_getDriverName() {
 const char *driver_getVersion() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver version...");
-        string driver_version;
+        static string driver_version;
         if (GetBackend()->GetDriverVersion(&driver_version) == 0) {
             return driver_version.c_str();
         }
@@ -107,7 +107,7 @@ const char *driver_getVersion() {
 const char *driver_getScheme() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver scheme...");
-        string driver_scheme;
+        static string driver_scheme;
         if (GetBackend()->GetDriverScheme(&driver_scheme) == 0) {
             return driver_scheme.c_str();
         }
@@ -293,7 +293,7 @@ int driver_fseek(void *stream, long long int offset, int whence) {
 const char *driver_getlasterror() {
     CATCH_ALL({
         GetLogger()->info("Retrieving last error...");
-        string last_error = GetLastError();
+        static string last_error = GetLastError();
         return last_error.empty() ? nullptr : last_error.c_str();
     })
     return "Error while trying to fetch last error.";
