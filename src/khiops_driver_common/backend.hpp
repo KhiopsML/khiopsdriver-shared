@@ -7,9 +7,9 @@
 
 namespace khiops_driver_common {
 
-/*****************************************
- *** FUNCTIONS PROVIDED BY THE DRIVER. ***
- *****************************************/
+/******************************************************
+ *** FUNCTIONS TO BE PROVIDED BY THE ACTUAL DRIVER. ***
+ ******************************************************/
 
 spdlog::logger *GetLogger();
 int GetDriverName(std::string *result);
