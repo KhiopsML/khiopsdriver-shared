@@ -1,10 +1,13 @@
 set(KhiopsDriverCommonSources
     backend.hpp
     contrib.hpp
-    driver.h driver.cpp
+    driver.h
+    driver.cpp
     filestream.hpp
-    filestreamregistry.hpp filestreamregistry.cpp
-    logging.hpp logging.cpp
+    filestreamregistry.hpp
+    filestreamregistry.cpp
+    logging.hpp
+    logging.cpp
     returnval.hpp
     stringify.hpp
     util.hpp
