@@ -43,6 +43,32 @@ static State *GetState() {
     return state.get();
 }
 
+// Function to detect if an URL points to a directory.
+static bool IsDirUrl(const std::string &url) {
+  return url.size() > 0 && url.back() == '/';
+}
+
+// Function to check that an URL points to directory and log an error if it is not the case.
+static bool CheckIsDirUrl(const std::string &url) {
+    if (IsDirUrl(url)) {
+        return true;
+    } else {
+        GetLogger()->error("URL indicates a file, not a directory.");
+        return false;
+    }
+}
+
+// Function to check that an URL points to file and log an error if it is not the case.
+// "File" here refers to an non-directory object, not necessarily a file object stored in a file share (it can be a blob, too).
+static bool CheckIsFileUrl(const std::string &url) {
+    if (!IsDirUrl(url)) {
+        return true;
+    } else {
+        GetLogger()->error("URL indicates a directory, not a file.");
+        return false;
+    }
+}
+
 // Function to check that the driver has been initialized and log an error if it is not the case
 static bool CheckInitialized() {
     if (GetState()->is_driver_initialized) {
@@ -172,15 +198,14 @@ int driver_exist(const char *filename) {
         GetLogger()->warn("Function {} is deprecated. Consider using the more specific driver_fileExists or driver_dirExists function.", __func__);
         GetLogger()->info("Checking if file or directory exists at URL {}...", filename);
         if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__)) {
-            string filename_as_string = filename;
-            if (filename_as_string.size() > 0 && filename_as_string[-1] == '/') {  // Directory
+            if (IsDirUrl(filename)) {
                 bool dir_exists;
-                if (DirExists(&dir_exists, filename_as_string) == 0) {
+                if (DirExists(&dir_exists, filename) == 0) {
                     return dir_exists ? kTrue : kFalse;
                 }
-            } else {  // File
+            } else {
                 bool file_exists;
-                if (FileExists(&file_exists, filename_as_string) == 0) {
+                if (FileExists(&file_exists, filename) == 0) {
                     return file_exists ? kTrue : kFalse;
                 }
             }
@@ -193,7 +218,7 @@ int driver_fileExists(const char *sFilePathName) {
     CATCH_ALL({
         GetLogger()->info("Checking if file exists at URL {}...", sFilePathName);
         bool file_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && FileExists(&file_exists, sFilePathName) == 0) {
+        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && CheckIsFileUrl(sFilePathName) && FileExists(&file_exists, sFilePathName) == 0) {
             return file_exists ? kTrue : kFalse;
         }
     })
@@ -204,7 +229,7 @@ int driver_dirExists(const char *sFilePathName) {
     CATCH_ALL({
         GetLogger()->info("Checking if directory exists at URL {}...", sFilePathName);
         bool dir_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && DirExists(&dir_exists, sFilePathName) == 0) {
+        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && CheckIsDirUrl(sFilePathName) && DirExists(&dir_exists, sFilePathName) == 0) {
             return dir_exists ? kTrue : kFalse;
         }
     })
@@ -215,7 +240,7 @@ long long int driver_getFileSize(const char *filename) {
     CATCH_ALL({
         GetLogger()->info("Retrieving size of file at URL {}...", filename);
         size_t file_size;
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && GetFileSize(&file_size, filename) == 0) {
+        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename) && GetFileSize(&file_size, filename) == 0) {
             return static_cast<long long int>(file_size);
         }
     })
