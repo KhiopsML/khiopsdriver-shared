@@ -52,10 +52,6 @@ spdlog::logger *GetLogger(const std::string &logger_name, const string &logfile_
   return logger.get();
 }
 
-spdlog::logger *GetLogger() {
-  return GetBackend()->GetLogger();
-}
-
 string GetLastError() {
   string logstring = logstringstream.str();
   logstringstream.str("");

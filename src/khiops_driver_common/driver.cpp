@@ -16,7 +16,6 @@
 #define CLOUD_STORAGE_DRIVER_EXPORT
 
 using namespace std;
-using namespace khiops_driver_common;
 
 // Macro that must be used in all public functions to avoid raising exceptions
 #define CATCH_ALL(stmt) \
@@ -77,6 +76,7 @@ static bool CheckNotNull(const void *arg, const char *param, const char *func) {
 } // namespace khiops_driver_common
 
 
+using namespace khiops_driver_common;
 
 /************************
  *** PUBLIC FUNCTIONS ***
@@ -86,7 +86,7 @@ const char *driver_getDriverName() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver name...");
         static string driver_name;
-        if (GetBackend()->GetDriverName(&driver_name) == 0) {
+        if (GetDriverName(&driver_name) == 0) {
             return driver_name.c_str();
         }
     })
@@ -97,7 +97,7 @@ const char *driver_getVersion() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver version...");
         static string driver_version;
-        if (GetBackend()->GetDriverVersion(&driver_version) == 0) {
+        if (GetDriverVersion(&driver_version) == 0) {
             return driver_version.c_str();
         }
     })
@@ -108,7 +108,7 @@ const char *driver_getScheme() {
     CATCH_ALL({
         GetLogger()->info("Retrieving driver scheme...");
         static string driver_scheme;
-        if (GetBackend()->GetDriverScheme(&driver_scheme) == 0) {
+        if (GetDriverScheme(&driver_scheme) == 0) {
             return driver_scheme.c_str();
         }
     })
@@ -119,7 +119,7 @@ int driver_isReadOnly() {
     CATCH_ALL({
         GetLogger()->info("Retrieving read-only state...");
         bool is_readonly;
-        if (GetBackend()->IsReadOnly(&is_readonly) == 0) {
+        if (IsReadOnly(&is_readonly) == 0) {
             return is_readonly ? kTrue : kFalse;
         }
     })
@@ -129,7 +129,7 @@ int driver_isReadOnly() {
 int driver_connect() {
     CATCH_ALL({
         GetLogger()->info("Connecting...");
-        if (CheckNotInitialized() && GetBackend()->Initialize() == 0) {
+        if (CheckNotInitialized() && Initialize() == 0) {
             GetState()->is_driver_initialized = true;
             return kOtherSuccess;
         }
@@ -140,7 +140,7 @@ int driver_connect() {
 int driver_disconnect() {
     CATCH_ALL({
         GetLogger()->info("Disconnecting...");
-        if (CheckInitialized() && GetBackend()->Finalize() == 0) {
+        if (CheckInitialized() && Finalize() == 0) {
             GetState()->is_driver_initialized = false;
             return kOtherSuccess;
         }
@@ -160,7 +160,7 @@ long long int driver_getSystemPreferredBufferSize() {
     CATCH_ALL({
         GetLogger()->info("Retrieving preferred buffer size...");
         size_t buffer_size;
-        if (GetBackend()->GetSystemPreferredBufferSize(&buffer_size) == 0) {
+        if (GetSystemPreferredBufferSize(&buffer_size) == 0) {
             return static_cast<long long int>(buffer_size);
         }
     })
@@ -175,12 +175,12 @@ int driver_exist(const char *filename) {
             string filename_as_string = filename;
             if (filename_as_string.size() > 0 && filename_as_string[-1] == '/') {  // Directory
                 bool dir_exists;
-                if (GetBackend()->DirExists(&dir_exists, filename_as_string) == 0) {
+                if (DirExists(&dir_exists, filename_as_string) == 0) {
                     return dir_exists ? kTrue : kFalse;
                 }
             } else {  // File
                 bool file_exists;
-                if (GetBackend()->FileExists(&file_exists, filename_as_string) == 0) {
+                if (FileExists(&file_exists, filename_as_string) == 0) {
                     return file_exists ? kTrue : kFalse;
                 }
             }
@@ -193,7 +193,7 @@ int driver_fileExists(const char *sFilePathName) {
     CATCH_ALL({
         GetLogger()->info("Checking if file exists at URL {}...", sFilePathName);
         bool file_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && GetBackend()->FileExists(&file_exists, sFilePathName) == 0) {
+        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && FileExists(&file_exists, sFilePathName) == 0) {
             return file_exists ? kTrue : kFalse;
         }
     })
@@ -204,7 +204,7 @@ int driver_dirExists(const char *sFilePathName) {
     CATCH_ALL({
         GetLogger()->info("Checking if directory exists at URL {}...", sFilePathName);
         bool dir_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && GetBackend()->DirExists(&dir_exists, sFilePathName) == 0) {
+        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && DirExists(&dir_exists, sFilePathName) == 0) {
             return dir_exists ? kTrue : kFalse;
         }
     })
@@ -215,7 +215,7 @@ long long int driver_getFileSize(const char *filename) {
     CATCH_ALL({
         GetLogger()->info("Retrieving size of file at URL {}...", filename);
         size_t file_size;
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && GetBackend()->GetFileSize(&file_size, filename) == 0) {
+        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && GetFileSize(&file_size, filename) == 0) {
             return static_cast<long long int>(file_size);
         }
     })
@@ -232,7 +232,7 @@ void *driver_fopen(const char *filename, char mode) {
             && FileModeCharToFileStreamMode(&stream.mode, mode) == 0
         ) {
             if (
-                GetBackend()->FOpen(stream, filename) == 0
+                FOpen(stream, filename) == 0
                 && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0
             ) {
                 return handle;
@@ -251,7 +251,7 @@ int driver_fclose(void *stream) {
         if (
             CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)
             && GetState()->file_stream_registry.GetStream(&file_stream, stream) == 0
-            && GetBackend()->FClose(*file_stream) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
+            && FClose(*file_stream) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
         ) {
             return kSuccess;
         }
@@ -267,7 +267,7 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
         if (
             CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
             && GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0
-            && GetBackend()->FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL
+            && FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL
         ) {
             return static_cast<long long int>(nread);
         }
@@ -280,7 +280,7 @@ int driver_fseek(void *stream, long long int offset, int whence) {
         GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
         FileStream *file_stream;
         if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__) && 0 <= whence && whence <= 2) {
-            if (GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0 && GetBackend()->FSeek(*file_stream, offset, whence) == 0) {
+            if (GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0 && FSeek(*file_stream, offset, whence) == 0) {
                 return kSuccess;
             }
         } else {
@@ -307,7 +307,7 @@ long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *st
         if (
             CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
             && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
-            && GetBackend()->FWrite(&nwritten, ptr, size, count, *file_stream) == 0
+            && FWrite(&nwritten, ptr, size, count, *file_stream) == 0
         ) {
             return static_cast<long long int>(nwritten);
         }
@@ -322,7 +322,7 @@ int driver_fflush(void *stream) {
         if (
             CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)
             && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
-            && GetBackend()->FFlush(*file_stream)
+            && FFlush(*file_stream)
         ) {
             return kSuccess;
         }
@@ -333,7 +333,7 @@ int driver_fflush(void *stream) {
 int driver_remove(const char *filename) {
     CATCH_ALL({
         GetLogger()->info("Removing file at URL {}...", filename);
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && GetBackend()->Remove(filename) == 0) {
+        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && Remove(filename) == 0) {
             return kOtherSuccess;
         }
     })
@@ -343,7 +343,7 @@ int driver_remove(const char *filename) {
 int driver_mkdir(const char *pathname) {
     CATCH_ALL({
         GetLogger()->info("Creating directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && GetBackend()->Mkdir(pathname) == 0) {
+        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && Mkdir(pathname) == 0) {
             return kOtherSuccess;
         }
     })
@@ -353,7 +353,7 @@ int driver_mkdir(const char *pathname) {
 int driver_rmdir(const char *pathname) {
     CATCH_ALL({
         GetLogger()->info("Removing directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && GetBackend()->Rmdir(pathname) == 0) {
+        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && Rmdir(pathname) == 0) {
             return kOtherSuccess;
         }
     })
@@ -364,7 +364,7 @@ long long int driver_diskFreeSpace(const char *filename) {
     CATCH_ALL({
         GetLogger()->info("Retrieving free disk space at URL {}...", filename);
         size_t free_space;
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && GetBackend()->DiskFreeSpace(&free_space, filename) == 0) {
+        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && DiskFreeSpace(&free_space, filename) == 0) {
             return free_space;
         }
     })
@@ -376,7 +376,7 @@ int driver_copyToLocal(const char *sourcefilename, const char *destfilename) {
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
         if (
             CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
-            && GetBackend()->CopyToLocal(sourcefilename, destfilename) == 0
+            && CopyToLocal(sourcefilename, destfilename) == 0
         ) {
             return kOtherSuccess;
         }
@@ -389,7 +389,7 @@ int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
         if (
             CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
-            && GetBackend()->CopyFromLocal(sourcefilename, destfilename) == 0
+            && CopyFromLocal(sourcefilename, destfilename) == 0
         ) {
             return kOtherSuccess;
         }
@@ -408,7 +408,7 @@ int driver_concat(const char *destfilename, const char **sourcefilenames, size_t
             && CheckNotNull(sourcefilenames, STRINGIFY(sourcefilenames), __func__)
             && sourcefilecount >= 2
         ) {
-            if (GetBackend()->Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0) {
+            if (Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0) {
                 return kOtherSuccess;
             }
         } else {
@@ -429,7 +429,7 @@ int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceF
             && CheckNotNull(sSourceFilePathNames, STRINGIFY(sSourceFilePathNames), __func__)
             && nSourceFileCount >= 2
         ) {
-            if (GetBackend()->Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) == 0) {
+            if (Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) == 0) {
                 return kOtherSuccess;
             }
         } else {
