@@ -53,7 +53,7 @@ static bool CheckIsDirUrl(const std::string &url) {
     if (IsDirUrl(url)) {
         return true;
     } else {
-        GetLogger()->error("URL indicates a file, not a directory.");
+        GetLogger()->error("URL {} indicates a file, not a directory.", url);
         return false;
     }
 }
@@ -64,7 +64,7 @@ static bool CheckIsFileUrl(const std::string &url) {
     if (!IsDirUrl(url)) {
         return true;
     } else {
-        GetLogger()->error("URL indicates a directory, not a file.");
+        GetLogger()->error("URL {} indicates a directory, not a file.", url);
         return false;
     }
 }
@@ -401,6 +401,7 @@ int driver_copyToLocal(const char *sourcefilename, const char *destfilename) {
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
         if (
             CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
+            && CheckIsFileUrl(sourcefilename) && CheckIsFileUrl(destfilename)
             && CopyToLocal(sourcefilename, destfilename) == 0
         ) {
             return kOtherSuccess;
@@ -414,6 +415,7 @@ int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
         if (
             CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
+            && CheckIsFileUrl(sourcefilename) && CheckIsFileUrl(destfilename)
             && CopyFromLocal(sourcefilename, destfilename) == 0
         ) {
             return kOtherSuccess;
