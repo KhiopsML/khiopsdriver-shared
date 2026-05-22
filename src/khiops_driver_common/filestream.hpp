@@ -1,5 +1,7 @@
 #pragma once
 
+#include "khiops_driver_common/logging.hpp"
+
 namespace khiops_driver_common {
 
 struct FileStream {
@@ -22,6 +24,7 @@ inline int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode) {
     } else if (mode == 'a') {
         *result = FileStream::Mode::APPEND;
     } else {
+        GetLogger()->error("Invalid file stream mode '{}'.", mode);
         return -1;
     }
     return 0;

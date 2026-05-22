@@ -254,16 +254,10 @@ void *driver_fopen(const char *filename, char mode) {
         void *handle;
         if (
             CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename)
-            && FileModeCharToFileStreamMode(&stream.mode, mode) == 0
+            && FileModeCharToFileStreamMode(&stream.mode, mode) == 0 && FOpen(stream, filename) == 0
+            && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0
         ) {
-            if (
-                FOpen(stream, filename) == 0
-                && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0
-            ) {
-                return handle;
-            }
-        } else {
-            GetLogger()->error("Tried to open file '{}' with invalid mode '{}'.", filename, mode);
+            return handle;
         }
     })
     return nullptr;
