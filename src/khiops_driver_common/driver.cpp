@@ -368,7 +368,7 @@ int driver_remove(const char *filename) {
 int driver_mkdir(const char *pathname) {
     CATCH_ALL({
         GetLogger()->info("Creating directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && Mkdir(pathname) == 0) {
+        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && CheckIsDirUrl(pathname) && Mkdir(pathname) == 0) {
             return kOtherSuccess;
         }
     })
@@ -378,7 +378,7 @@ int driver_mkdir(const char *pathname) {
 int driver_rmdir(const char *pathname) {
     CATCH_ALL({
         GetLogger()->info("Removing directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && Rmdir(pathname) == 0) {
+        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && CheckIsDirUrl(pathname) && Rmdir(pathname) == 0) {
             return kOtherSuccess;
         }
     })
