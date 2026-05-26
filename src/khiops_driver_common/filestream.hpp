@@ -16,6 +16,7 @@ struct FileReader {
         // The content size includes the header length only for the first fragment.
         size_t content_size;
     }> fragments;
+    size_t total_size;
 };
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url);

@@ -38,13 +38,13 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
 
     vector<size_t> fragment_sizes(total_number_of_fragments);
 
-    if (RemoteListObjects(&fragment_urls, &url) != 0) {
+    if (ListFragments(&fragment_urls, url) != 0) {
         // Failed to list remote objects matching the user-provided URL.
         return -1;
     }
     
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
-        if (RemoteGetSize(&fragment_sizes[fragment_index], fragment_urls[fragment_index]) != 0) {
+        if (GetFragmentSize(&fragment_sizes[fragment_index], fragment_urls[fragment_index]) != 0) {
             // Failed to get the size of the current remote object.
             return -1;
         }
@@ -65,7 +65,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
             }
 
             // Read the header.
-            if (RemoteRead(&header_just_read, fragment_urls[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+            if (ReadFragment(&header_just_read, fragment_urls[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
                 // Failed to read the header.
                 return -1;
             }
@@ -85,6 +85,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     
     // Create the file reader object.
     *file_reader = FileReader();
+    file_reader->total_size = 0ULL;
 
     size_t current_user_offset = 0ULL;
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
@@ -102,6 +103,9 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
         fragment.user_offset = current_user_offset;
         fragment.content_size = fragment_content_size;
         file_reader->fragments.push_back(fragment);
+
+        // Update the total size of the file.
+        file_reader->total_size += fragment_content_size;
 
         // Update the current user offset.
         current_user_offset += fragment_content_size;
