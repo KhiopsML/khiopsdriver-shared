@@ -66,7 +66,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
             }
 
             // Read the header.
-            if (ReadFragment(&header_just_read, fragment_urls[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+            if (ReadFragment(&header_just_read, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
                 // Failed to read the header.
                 return -1;
             }

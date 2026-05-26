@@ -46,7 +46,7 @@ static State *GetState() {
 
 // Function to check that an URL points to directory and log an error if it is not the case.
 static bool CheckIsDirUrl(const std::string &url) {
-    if (IsDirUrl(url)) {
+    if (util::IsDirUrl(url)) {
         return true;
     } else {
         GetLogger()->error("URL {} indicates a file, not a directory.", url);
@@ -57,7 +57,7 @@ static bool CheckIsDirUrl(const std::string &url) {
 // Function to check that an URL points to file and log an error if it is not the case.
 // "File" here refers to an non-directory object, not necessarily a file object stored in a file share (it can be a blob, too).
 static bool CheckIsFileUrl(const std::string &url) {
-    if (!IsDirUrl(url)) {
+    if (!util::IsDirUrl(url)) {
         return true;
     } else {
         GetLogger()->error("URL {} indicates a directory, not a file.", url);
@@ -194,7 +194,7 @@ int driver_exist(const char *filename) {
         GetLogger()->warn("Function {} is deprecated. Consider using the more specific driver_fileExists or driver_dirExists function.", __func__);
         GetLogger()->info("Checking if file or directory exists at URL {}...", filename);
         if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__)) {
-            if (IsDirUrl(filename)) {
+            if (util::IsDirUrl(filename)) {
                 bool dir_exists;
                 if (DirExists(&dir_exists, filename) == 0) {
                     return dir_exists ? kTrue : kFalse;

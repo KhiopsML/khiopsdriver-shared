@@ -14,7 +14,7 @@ namespace khiops_driver_common {
 spdlog::logger *GetLogger();
 int ListFragments(std::vector<std::string> *result, const std::string &url);
 int GetFragmentSizeAndVersion(size_t *size_result, void **version_result, const std::string &url);
-int ReadFragment(std::string *result, const std::string &url, size_t offset, size_t maxlength, char terminatorchar);
+int ReadFragment(std::string *result, bool *stopped_on_termchar, const std::string &url, void *version, size_t offset, size_t maxlength, char termchar);
 int GetDriverName(std::string *result);
 int GetDriverVersion(std::string *result);
 int GetDriverScheme(std::string *result);
