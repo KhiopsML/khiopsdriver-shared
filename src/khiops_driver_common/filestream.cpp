@@ -24,41 +24,89 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
 
     size_t number_of_fragments_picked_randomly = 0ULL;
     
-    // Before any readings are performed, we do not know it there is a header, so there MAY BE one.
+    //     ** A NOTE ABOUT REPEATED HEADERS **
+    //
+    // A repeated header is a header that is repeated at the beginning of every fragment.
+    // From the user point of view, the header is a part of the content of the first fragment only.
+
+    // Before any readings are performed, we do not know it there is a repeated header, so there MAY BE one.
     bool there_may_be_a_header = true;
 
     string possible_header;
     string header_just_read;
     size_t possible_header_length = MAX_HEADER_LENGTH;
 
-    if (ListRemoteObjects(&fragment_urls, &url) == 0) {
-        for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
-            if (there_may_be_a_header) {
-                // Determine if we need to fetch the header of the current fragment.
-                bool should_read_header = false;
-                if (fragment_index < NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END || total_number_of_fragments - NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END <= fragment_index) {
-                    should_read_header = true;
-                } else if (number_of_fragments_picked_randomly < MAX_NUMBER_OF_FRAGMENTS_TO_PICK_RANDOMLY && util::random::RandomBool()) {
-                    should_read_header = true;
-                    number_of_fragments_picked_randomly++;
-                }
+    vector<size_t> fragment_sizes(total_number_of_fragments);
 
-                // Read the header.
-                if (RemoteRead(&header_just_read, fragment_urls[fragment_index], 0ULL, possible_header_length, '\n') == 0) {
-                    if (header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
-                        there_may_be_a_header = false;
-                    } else if (fragment_index == 0ULL) {
-                        possible_header_length = header_just_read.size();
-                        possible_header = header_just_read;
-                    }
-                } else {  // Failed to read header.
-                    return -1;
-                }
-            }
-        }
-    } else {  // Failed to list remote objects matching the user-provided URL.
+    if (RemoteListObjects(&fragment_urls, &url) != 0) {
+        // Failed to list remote objects matching the user-provided URL.
         return -1;
     }
+    
+    for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
+        if (RemoteGetSize(&fragment_sizes[fragment_index], fragment_urls[fragment_index]) != 0) {
+            // Failed to get the size of the current remote object.
+            return -1;
+        }
+
+        if (there_may_be_a_header) {
+            if (fragment_index > 0ULL && fragment_sizes[fragment_index] < possible_header_length) {
+                // A header has previously been detected but it is too big to fit inside the current fragment.
+                there_may_be_a_header = false;
+            }
+
+            // Determine if we need to fetch the header of the current fragment.
+            bool should_read_header = false;
+            if (fragment_index < NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END || total_number_of_fragments - NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END <= fragment_index) {
+                should_read_header = true;
+            } else if (number_of_fragments_picked_randomly < MAX_NUMBER_OF_FRAGMENTS_TO_PICK_RANDOMLY && util::random::RandomBool()) {
+                should_read_header = true;
+                number_of_fragments_picked_randomly++;
+            }
+
+            // Read the header.
+            if (RemoteRead(&header_just_read, fragment_urls[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+                // Failed to read the header.
+                return -1;
+            }
+
+            if (header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
+                there_may_be_a_header = false;
+            } else if (fragment_index == 0ULL) {
+                possible_header_length = header_just_read.size();
+                possible_header = header_just_read;
+            }
+        }
+    }
+
+    // From now on, we know if there is a repeated header or not, and if there is one we know its content and, more importantly, its size.
+    bool there_is_a_header = there_may_be_a_header;
+    size_t header_length = possible_header_length;
+    
+    // Create the file reader object.
+    *file_reader = FileReader();
+
+    size_t current_user_offset = 0ULL;
+    for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
+        // Only the first fragment will include the header in its content.
+        size_t fragment_content_size = there_is_a_header && fragment_index > 0ULL ? fragment_sizes[fragment_index] - header_length : fragment_sizes[fragment_index];
+        
+        if (fragment_content_size == 0ULL) {
+            // A fragment may be empty if it was really an empty remote object, or if the file contains a repeated header and it is the only content of the fragment.
+            // We do not want empty fragments in the result, so skip this one.
+            continue;
+        }
+
+        // Create the fragment object and add it into the file reader's vector of fragments.
+        FileReader::Fragment fragment;
+        fragment.user_offset = current_user_offset;
+        fragment.content_size = fragment_content_size;
+        file_reader->fragments.push_back(fragment);
+
+        // Update the current user offset.
+        current_user_offset += fragment_content_size;
+    }
+
     return 0;
 }
 
