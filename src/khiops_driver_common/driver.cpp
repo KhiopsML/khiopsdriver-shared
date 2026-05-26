@@ -9,6 +9,7 @@
 #include "khiops_driver_common/backend.hpp"
 #include "khiops_driver_common/returnval.hpp"
 #include "khiops_driver_common/logging.hpp"
+#include "khiops_driver_common/util.hpp"
 #include "khiops_driver_common/filestreamregistry.hpp"
 #include "khiops_driver_common/stringify.hpp"
 
@@ -41,11 +42,6 @@ static State *GetState() {
         state->is_driver_initialized = false;
     }
     return state.get();
-}
-
-// Function to detect if an URL points to a directory.
-static bool IsDirUrl(const std::string &url) {
-  return url.size() > 0 && url.back() == '/';
 }
 
 // Function to check that an URL points to directory and log an error if it is not the case.

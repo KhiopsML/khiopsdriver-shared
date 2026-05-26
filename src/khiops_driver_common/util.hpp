@@ -124,5 +124,10 @@ inline size_t FindGlobbingChar(const std::string &str) {
 
 } // namespace glob
 
+// Function to detect if an URL points to a directory.
+inline bool IsDirUrl(const std::string &url) {
+  return url.size() > 0 && url.back() == '/';
+}
+
 } // namespace util
 } // namespace khiops_driver_common
