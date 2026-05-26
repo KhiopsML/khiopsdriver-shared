@@ -37,6 +37,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     size_t possible_header_length = MAX_HEADER_LENGTH;
 
     vector<size_t> fragment_sizes(total_number_of_fragments);
+    vector<void *> fragment_versions(total_number_of_fragments);
 
     if (ListFragments(&fragment_urls, url) != 0) {
         // Failed to list remote objects matching the user-provided URL.
@@ -44,8 +45,8 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     }
     
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
-        if (GetFragmentSize(&fragment_sizes[fragment_index], fragment_urls[fragment_index]) != 0) {
-            // Failed to get the size of the current remote object.
+        if (GetFragmentSizeAndVersion(&fragment_sizes[fragment_index], &fragment_versions[fragment_index], fragment_urls[fragment_index]) != 0) {
+            // Failed to get the size or the version of the current remote object.
             return -1;
         }
 
@@ -91,17 +92,12 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
         // Only the first fragment will include the header in its content.
         size_t fragment_content_size = there_is_a_header && fragment_index > 0ULL ? fragment_sizes[fragment_index] - header_length : fragment_sizes[fragment_index];
-        
-        if (fragment_content_size == 0ULL) {
-            // A fragment may be empty if it was really an empty remote object, or if the file contains a repeated header and it is the only content of the fragment.
-            // We do not want empty fragments in the result, so skip this one.
-            continue;
-        }
 
         // Create the fragment object and add it into the file reader's vector of fragments.
         FileReader::Fragment fragment;
         fragment.user_offset = current_user_offset;
         fragment.content_size = fragment_content_size;
+        fragment.version = fragment_versions[fragment_index];
         file_reader->fragments.push_back(fragment);
 
         // Update the total size of the file.
