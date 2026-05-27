@@ -10,7 +10,6 @@
 #include "khiops_driver_common/returnval.hpp"
 #include "khiops_driver_common/logging.hpp"
 #include "khiops_driver_common/util.hpp"
-#include "khiops_driver_common/filestreamregistry.hpp"
 #include "khiops_driver_common/stringify.hpp"
 
 // Compiling this file means we are currently compiling the driver, so export public functions.
@@ -33,7 +32,8 @@ namespace khiops_driver_common {
 // Global state
 struct State {
     bool is_driver_initialized;
-    FileStreamRegistry file_stream_registry;
+    unordered_map<void *, unique_ptr<FileReader>> file_readers;
+    unordered_map<void *, unique_ptr<FileWriter>> file_writers;
 };
 static State *GetState() {
     static unique_ptr<State> state = nullptr;
@@ -42,6 +42,42 @@ static State *GetState() {
         state->is_driver_initialized = false;
     }
     return state.get();
+}
+
+static bool FindFileReader(FileReader **result, void *handle) {
+    auto it = GetState()->file_readers.find(handle);
+    if (it != GetState()->file_readers.end()) {
+        *result = it->second.get();
+        return true;
+    }
+    return false;
+}
+
+static int GetFileReader(FileReader **result, void *handle) {
+    if (FindFileReader(result, handle)) {
+        return 0;
+    } else {
+        GetLogger()->error("No file open in read mode with handle {}.", handle);
+    }
+    return -1;
+}
+
+static bool FindFileWriter(FileWriter **result, void *handle) {
+    auto it = GetState()->file_writers.find(handle);
+    if (it != GetState()->file_writers.end()) {
+        *result = it->second.get();
+        return true;
+    }
+    return false;
+}
+
+static int GetFileWriter(FileWriter **result, void *handle) {
+    if (FindFileWriter(result, handle)) {
+        return 0;
+    } else {
+        GetLogger()->error("No file open in write or append mode with handle {}.", handle);
+    }
+    return -1;
 }
 
 // Function to check that an URL points to directory and log an error if it is not the case.
@@ -246,16 +282,27 @@ long long int driver_getFileSize(const char *filename) {
 void *driver_fopen(const char *filename, char mode) {
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
-        FileStream stream;
-        void *handle;
         if (
             CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename)
-            && FileModeCharToFileStreamMode(&stream.mode, mode) == 0
          ) {
-            stream.url = filename;
-            if (FOpen(stream, filename) == 0 && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
-                return handle;
+            if (mode == 'r') {
+                unique_ptr<FileReader> file_reader = make_unique<FileReader>();
+                if (PopulateFileReader(file_reader.get(), filename) == 0) {
+                    if (GetState()->file_readers.insert({static_cast<void *>(file_reader.get()), std::move(file_reader)}).second) {
+                        return static_cast<void *>(file_reader.get());
+                    } else {
+                        GetLogger()->error("Failed to register file stream.");
+                    }
+                }
+            } else if (mode == 'w' || mode == 'a') {
+                unique_ptr<FileWriter> file_writer = make_unique<FileWriter>();
+            } else {
+                GetLogger()->error("Invalid file stream mode '{}'.", mode);
             }
+            // stream.url = filename;
+            // if (FOpen(stream, filename) == 0 && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
+            //     return handle;
+            // }
         }
     })
     return nullptr;
@@ -264,13 +311,24 @@ void *driver_fopen(const char *filename, char mode) {
 int driver_fclose(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
-        FileStream *file_stream;
-        if (
-            CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetState()->file_stream_registry.GetStream(&file_stream, stream) == 0
-            && FClose(*file_stream) == 0 && GetState()->file_stream_registry.RemoveStream(stream) == 0
-        ) {
-            return kSuccess;
+        if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)) {
+            FileReader *file_reader;
+            FileWriter *file_writer;
+            if (FindFileReader(&file_reader, stream)) {
+                if (FCloseReader(*file_reader) == 0 && GetState()->file_readers.erase(stream) == 1ULL) {
+                    return kSuccess;
+                } else {
+                    GetLogger()->error("Failed to unregister file stream.");
+                }
+            } else if (FindFileWriter(&file_writer, stream)) {
+                if (FCloseWriter(*file_writer) == 0 && GetState()->file_writers.erase(stream) == 1ULL) {
+                    return kSuccess;
+                } else {
+                    GetLogger()->error("Failed to unregister file stream.");
+                }
+            } else {
+                GetLogger()->error("No file open with handle {}.", stream);
+            }
         }
     })
     return kFailure;
@@ -279,12 +337,12 @@ int driver_fclose(void *stream) {
 long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
     CATCH_ALL({
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
-        FileStream *file_stream;
+        FileReader *file_reader;
         size_t nread;
         if (
             CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0
-            && FRead(&nread, ptr, size, count, *file_stream) == 0 && nread != 0ULL
+            && GetFileReader(&file_reader, stream) == 0
+            && FRead(&nread, ptr, *file_reader, size, count) == 0 && nread != 0ULL
         ) {
             return static_cast<long long int>(nread);
         }
@@ -295,9 +353,9 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
 int driver_fseek(void *stream, long long int offset, int whence) {
     CATCH_ALL({
         GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
-        FileStream *file_stream;
+        FileReader *file_reader;
         if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__) && 0 <= whence && whence <= 2) {
-            if (GetState()->file_stream_registry.GetReaderStream(&file_stream, stream) == 0 && FSeek(*file_stream, offset, whence) == 0) {
+            if (GetFileReader(&file_reader, stream) == 0 && FSeek(*file_reader, offset, whence) == 0) {
                 return kSuccess;
             }
         } else {
@@ -319,12 +377,11 @@ const char *driver_getlasterror() {
 long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *stream) {
     CATCH_ALL({
         GetLogger()->info("Writing {}x{} bytes from {} to file with handle {}...", size, count, ptr, stream);
-        FileStream *file_stream;
+        FileWriter *file_writer;
         size_t nwritten;
         if (
             CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
-            && FWrite(&nwritten, ptr, size, count, *file_stream) == 0
+            && GetFileWriter(&file_writer, stream) == 0 && FWrite(&nwritten, *file_writer, ptr, size, count) == 0
         ) {
             return static_cast<long long int>(nwritten);
         }
@@ -335,11 +392,10 @@ long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *st
 int driver_fflush(void *stream) {
     CATCH_ALL({
         GetLogger()->info("Flushing file with handle {}...", stream);
-        FileStream *file_stream;
+        FileWriter *file_writer;
         if (
             CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetState()->file_stream_registry.GetWriterOrAppenderStream(&file_stream, stream) == 0
-            && FFlush(*file_stream)
+            && GetFileWriter(&file_writer, stream) == 0 && FFlush(*file_writer)
         ) {
             return kSuccess;
         }

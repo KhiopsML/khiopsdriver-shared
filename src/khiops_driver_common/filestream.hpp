@@ -22,19 +22,14 @@ struct FileReader {
         // The destructor then calls "FreeVersion".
         inline ~Fragment() { FreeVersion(); }
     };
+    std::string url;
     std::vector<Fragment> fragments;
     size_t total_size;
 };
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url);
 
-struct FileStream {
-    std::string url;
-    enum struct Mode {NONE = 0, READ, WRITE, APPEND} mode;
-    FileStream();
-    FileStream(FileStream &&source);
+struct FileWriter {
 };
-
-int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode);
 
 }
