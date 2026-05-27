@@ -66,12 +66,13 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
             }
 
             // Read the header.
-            if (ReadFragment(&header_just_read, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+            bool stopped_on_termchar;
+            if (ReadFragment(&header_just_read, &stopped_on_termchar, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
                 // Failed to read the header.
                 return -1;
             }
 
-            if (header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
+            if (!stopped_on_termchar || header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
                 there_may_be_a_header = false;
             } else if (fragment_index == 0ULL) {
                 possible_header_length = header_just_read.size();
