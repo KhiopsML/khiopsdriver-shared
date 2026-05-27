@@ -122,6 +122,10 @@ inline size_t FindGlobbingChar(const std::string &str) {
              : std::string::npos;
 }
 
+inline bool IsGlobbingPattern(const std::string &str) {
+  return FindGlobbingChar(str) != std::string::npos;
+}
+
 } // namespace glob
 
 // Function to detect if an URL points to a directory.
