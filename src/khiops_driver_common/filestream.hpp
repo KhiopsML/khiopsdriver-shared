@@ -17,8 +17,10 @@ struct FileReader {
         size_t content_size;
         // The version of the file is used to detect if the file has been modified before a reading.
         void *version = nullptr;
-        // The destructor must be implemented by the driver to free the memory allocated to the "version" member above.
-        ~Fragment();
+        // This function must be implemented by the driver to free the memory allocated to the "version" member above.
+        void FreeVersion();
+        // The destructor then calls "FreeVersion".
+        inline ~Fragment() { FreeVersion(); }
     };
     std::vector<Fragment> fragments;
     size_t total_size;
