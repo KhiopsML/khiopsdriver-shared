@@ -126,6 +126,15 @@ inline bool IsGlobbingPattern(const std::string &str) {
   return FindGlobbingChar(str) != std::string::npos;
 }
 
+inline int CheckIsNotGlobbingPattern(const string &str) {
+    if (IsGlobbingPattern(str)) {
+        khiops_driver_common::GetLogger()->error("Passed a globbing URL while a real URL was expected.");
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
 } // namespace glob
 
 // Function to detect if an URL points to a directory.
