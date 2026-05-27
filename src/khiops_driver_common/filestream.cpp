@@ -8,6 +8,11 @@ using namespace std;
 namespace khiops_driver_common {
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url) {
+    if (file_reader == nullptr) {
+        GetLogger()->error("Null pointer passed to function {}.", __func__);
+        return -1;
+    }
+
     // Number of fragments to pick at each end for header detection.
     const size_t NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END = 5;
     // Number of fragments to pick randomly for header detection. This is only a maximum since priority is given to the "pick 'n' at each end" rule.
@@ -20,29 +25,30 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     // OR
     //   - one URL matching a remote object if the user-provided URL is NOT a globbing pattern.
     vector<string> fragment_urls;
-    const size_t total_number_of_fragments = fragment_urls.size();
-
+    
     size_t number_of_fragments_picked_randomly = 0ULL;
     
     //     ** A NOTE ABOUT REPEATED HEADERS **
     //
     // A repeated header is a header that is repeated at the beginning of every fragment.
     // From the user point of view, the header is a part of the content of the first fragment only.
-
+    
     // Before any readings are performed, we do not know it there is a repeated header, so there MAY BE one.
     bool there_may_be_a_header = true;
 
     string possible_header;
     string header_just_read;
     size_t possible_header_length = MAX_HEADER_LENGTH;
-
-    vector<size_t> fragment_sizes(total_number_of_fragments);
-    vector<void *> fragment_versions(total_number_of_fragments);
-
+    
+    
     if (ListFragments(&fragment_urls, url) != 0) {
         // Failed to list remote objects matching the user-provided URL.
         return -1;
     }
+
+    const size_t total_number_of_fragments = fragment_urls.size();
+    vector<size_t> fragment_sizes(total_number_of_fragments);
+    vector<void *> fragment_versions(total_number_of_fragments);
     
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
         if (GetFragmentSizeAndVersion(&fragment_sizes[fragment_index], &fragment_versions[fragment_index], fragment_urls[fragment_index]) != 0) {
@@ -58,25 +64,27 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
 
             // Determine if we need to fetch the header of the current fragment.
             bool should_read_header = false;
-            if (fragment_index < NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END || total_number_of_fragments - NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END <= fragment_index) {
+            if (fragment_index < NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END || total_number_of_fragments <= fragment_index + NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END) {
                 should_read_header = true;
             } else if (number_of_fragments_picked_randomly < MAX_NUMBER_OF_FRAGMENTS_TO_PICK_RANDOMLY && util::random::RandomBool()) {
                 should_read_header = true;
                 number_of_fragments_picked_randomly++;
             }
 
-            // Read the header.
-            bool stopped_on_termchar;
-            if (ReadFragment(&header_just_read, &stopped_on_termchar, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
-                // Failed to read the header.
-                return -1;
-            }
+            if (should_read_header) {
+                // Read the header.
+                bool stopped_on_termchar;
+                if (ReadFragment(&header_just_read, &stopped_on_termchar, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+                    // Failed to read the header.
+                    return -1;
+                }
 
-            if (!stopped_on_termchar || header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
-                there_may_be_a_header = false;
-            } else if (fragment_index == 0ULL) {
-                possible_header_length = header_just_read.size();
-                possible_header = header_just_read;
+                if (!stopped_on_termchar || header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
+                    there_may_be_a_header = false;
+                } else if (fragment_index == 0ULL) {
+                    possible_header_length = header_just_read.size();
+                    possible_header = header_just_read;
+                }
             }
         }
     }

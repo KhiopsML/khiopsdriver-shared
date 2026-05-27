@@ -6,7 +6,7 @@
 namespace khiops_driver_common {
 
 struct FileReader {
-    std::vector<struct Fragment {
+    struct Fragment {
         // The user offset is the start position of this fragment in the whole
         // file as seen by the user. If the file contains a header that is
         // repeated in each fragment, the user only sees the header at the
@@ -19,7 +19,8 @@ struct FileReader {
         void *version = nullptr;
         // The destructor must be implemented by the driver to free the memory allocated to the "version" member above.
         ~Fragment();
-    }> fragments;
+    };
+    std::vector<Fragment> fragments;
     size_t total_size;
 };
 
