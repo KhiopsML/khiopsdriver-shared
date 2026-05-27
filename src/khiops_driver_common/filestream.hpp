@@ -29,7 +29,6 @@ struct FileReader {
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url);
 
-struct FileWriter {
-};
+struct FileWriter {};
 
 }

@@ -119,28 +119,4 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     return 0;
 }
 
-FileStream::FileStream():
-    url(""),
-    mode(Mode::NONE)
-{}
-
-FileStream::FileStream(FileStream &&source):
-    url(std::move(source.url)),
-    mode(std::move(source.mode))
-{}
-
-int FileModeCharToFileStreamMode(FileStream::Mode *result, char mode) {
-    if (mode == 'r') {
-        *result = FileStream::Mode::READ;
-    } else if (mode == 'w') {
-        *result = FileStream::Mode::WRITE;
-    } else if (mode == 'a') {
-        *result = FileStream::Mode::APPEND;
-    } else {
-        GetLogger()->error("Invalid file stream mode '{}'.", mode);
-        return -1;
-    }
-    return 0;
-}
-
 }
