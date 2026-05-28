@@ -98,6 +98,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     *file_reader = FileReader();
     file_reader->total_size = 0ULL;
     file_reader->header_length = header_length;
+    file_reader->current_position = 0ULL;
 
     size_t current_user_offset = 0ULL;
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
@@ -106,6 +107,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
 
         // Create the fragment object and add it into the file reader's vector of fragments.
         FileReader::Fragment fragment;
+        fragment.url = fragment_urls[fragment_index];
         fragment.user_offset = current_user_offset;
         fragment.content_size = fragment_content_size;
         fragment.version = fragment_versions[fragment_index];

@@ -14,6 +14,7 @@ namespace khiops_driver_common {
 spdlog::logger *GetLogger();
 int ListFragments(std::vector<std::string> *result, const std::string &url);
 int GetFragmentSizeAndVersion(size_t *size_result, void **version_result, const std::string &url);
+int ReadFragment(std::string *result, bool *stopped_on_termchar, const std::string &url, void *version, size_t offset, size_t maxlength);
 int ReadFragment(std::string *result, bool *stopped_on_termchar, const std::string &url, void *version, size_t offset, size_t maxlength, char termchar);
 int GetDriverName(std::string *result);
 int GetDriverVersion(std::string *result);
@@ -27,7 +28,7 @@ int DirExists(bool *result, const std::string &sFilePathName);
 int GetFileSize(size_t *result, const std::string &filename);
 int FCloseReader(const FileReader &stream);
 int FCloseWriter(const FileWriter &stream);
-int FRead(size_t *result, void *ptr, const FileReader &file_reader, size_t size, size_t count);
+int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
 int FSeek(const FileReader &file_reader, long long int offset, int whence);
 int FWrite(size_t *result, const FileWriter &file_writer, const void *ptr, size_t size, size_t count);
 int FFlush(const FileWriter &file_writer);
