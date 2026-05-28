@@ -24,7 +24,10 @@ struct FileReader {
     };
     std::string url;
     std::vector<Fragment> fragments;
+    // Total size of the file as seen by the user, that is, if there is a repeated header, its length is included only in the size of the first fragment.
     size_t total_size;
+    // The header length is zero if there is no repeated header in this file.
+    size_t header_length;
 };
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url);

@@ -96,6 +96,7 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
     // Create the file reader object.
     *file_reader = FileReader();
     file_reader->total_size = 0ULL;
+    file_reader->header_length = header_length;
 
     size_t current_user_offset = 0ULL;
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
