@@ -25,7 +25,8 @@ using namespace std;
         GetLogger()->error("An exception has been raised: {}", exc.what()); \
     } catch (...) { \
         GetLogger()->error("An non-exception value has been raised as an exception."); \
-    }
+    } \
+    return KO;
 
 namespace khiops_driver_common {
 
@@ -141,406 +142,413 @@ using namespace khiops_driver_common;
  ************************/
 
 const char *driver_getDriverName() {
+    const char *const KO = nullptr;
     CATCH_ALL({
         GetLogger()->info("Retrieving driver name...");
         static string driver_name;
-        if (GetDriverName(&driver_name) == 0) {
-            return driver_name.c_str();
-        }
+        if (GetDriverName(&driver_name) != 0) return KO;
+        return driver_name.c_str();
     })
-    return nullptr;
 }
 
 const char *driver_getVersion() {
+    const char *const KO = nullptr;
     CATCH_ALL({
         GetLogger()->info("Retrieving driver version...");
         static string driver_version;
-        if (GetDriverVersion(&driver_version) == 0) {
-            return driver_version.c_str();
-        }
+        if (GetDriverVersion(&driver_version) != 0) return KO;
+        return driver_version.c_str();
     })
-    return nullptr;
 }
 
 const char *driver_getScheme() {
+    const char *const KO = nullptr;
     CATCH_ALL({
         GetLogger()->info("Retrieving driver scheme...");
         static string driver_scheme;
-        if (GetDriverScheme(&driver_scheme) == 0) {
-            return driver_scheme.c_str();
-        }
+        if (GetDriverScheme(&driver_scheme) != 0) return KO;
+        return driver_scheme.c_str();
     })
-    return nullptr;
 }
 
 int driver_isReadOnly() {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Retrieving read-only state...");
         bool is_readonly;
-        if (IsReadOnly(&is_readonly) == 0) {
-            return is_readonly ? kTrue : kFalse;
-        }
+        if (IsReadOnly(&is_readonly) != 0) return KO;
+        return is_readonly ? kTrue : kFalse;
     })
-    return kFailure;
 }
 
 int driver_connect() {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Connecting...");
-        if (CheckNotInitialized() && Initialize() == 0) {
-            GetState()->is_driver_initialized = true;
-            return kOtherSuccess;
-        }
+        if (!CheckNotInitialized()) return KO;
+        if (Initialize() != 0) return KO;
+        GetState()->is_driver_initialized = true;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_disconnect() {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Disconnecting...");
-        if (CheckInitialized() && Finalize() == 0) {
-            GetState()->is_driver_initialized = false;
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (Finalize() != 0) return KO;
+        GetState()->is_driver_initialized = false;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_isConnected() {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Retrieving connection state...");
         return GetState()->is_driver_initialized ? kTrue : kFalse;
     })
-    return kFailure;
 }
 
 long long int driver_getSystemPreferredBufferSize() {
+    const long long int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Retrieving preferred buffer size...");
         size_t buffer_size;
-        if (GetSystemPreferredBufferSize(&buffer_size) == 0) {
-            return static_cast<long long int>(buffer_size);
-        }
+        if (GetSystemPreferredBufferSize(&buffer_size) != 0) return KO;
+        return static_cast<long long int>(buffer_size);
     })
-    return kFailure;
 }
 
 int driver_exist(const char *filename) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->warn("Function {} is deprecated. Consider using the more specific driver_fileExists or driver_dirExists function.", __func__);
         GetLogger()->info("Checking if file or directory exists at URL {}...", filename);
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__)) {
-            if (util::IsDirUrl(filename)) {
-                bool dir_exists;
-                if (DirExists(&dir_exists, filename) == 0) {
-                    return dir_exists ? kTrue : kFalse;
-                }
-            } else {
-                bool file_exists;
-                if (FileExists(&file_exists, filename) == 0) {
-                    return file_exists ? kTrue : kFalse;
-                }
-            }
-        }
-    })
-    return kFailure;
-}
-
-int driver_fileExists(const char *sFilePathName) {
-    CATCH_ALL({
-        GetLogger()->info("Checking if file exists at URL {}...", sFilePathName);
-        bool file_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && CheckIsFileUrl(sFilePathName) && FileExists(&file_exists, sFilePathName) == 0) {
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
+        if (util::IsDirUrl(filename)) {
+            bool dir_exists;
+            if (DirExists(&dir_exists, filename) != 0) return KO;
+            return dir_exists ? kTrue : kFalse;
+        } else {
+            bool file_exists;
+            if (FileExists(&file_exists, filename) != 0) return KO;
             return file_exists ? kTrue : kFalse;
         }
     })
-    return kFailure;
+}
+
+int driver_fileExists(const char *sFilePathName) {
+    const int KO = kFailure;
+    CATCH_ALL({
+        GetLogger()->info("Checking if file exists at URL {}...", sFilePathName);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__)) return KO;
+        if (!CheckIsFileUrl(sFilePathName)) return KO;
+        bool file_exists;
+        if (FileExists(&file_exists, sFilePathName) != 0) return KO;
+        return file_exists ? kTrue : kFalse;
+    })
 }
 
 int driver_dirExists(const char *sFilePathName) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Checking if directory exists at URL {}...", sFilePathName);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__)) return KO;
+        if (!CheckIsDirUrl(sFilePathName)) return KO;
         bool dir_exists;
-        if (CheckInitialized() && CheckNotNull(sFilePathName, STRINGIFY(sFilePathName), __func__) && CheckIsDirUrl(sFilePathName) && DirExists(&dir_exists, sFilePathName) == 0) {
-            return dir_exists ? kTrue : kFalse;
-        }
+        if (DirExists(&dir_exists, sFilePathName) != 0) return KO;
+        return dir_exists ? kTrue : kFalse;
     })
-    return kFailure;
 }
 
 long long int driver_getFileSize(const char *filename) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Retrieving size of file at URL {}...", filename);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
+        if (!CheckIsFileUrl(filename)) return KO;
         size_t file_size;
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename) && GetFileSize(&file_size, filename) == 0) {
-            return static_cast<long long int>(file_size);
-        }
+        if (GetFileSize(&file_size, filename) != 0) return KO;
+        return static_cast<long long int>(file_size);
     })
-    return kFailure;
 }
 
 void *driver_fopen(const char *filename, char mode) {
+    void *const KO = nullptr;
     CATCH_ALL({
         GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
-        if (
-            CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename)
-         ) {
-            if (mode == 'r') {
-                unique_ptr<FileReader> file_reader = make_unique<FileReader>();
-                if (PopulateFileReader(file_reader.get(), filename) == 0) {
-                    if (GetState()->file_readers.insert({static_cast<void *>(file_reader.get()), std::move(file_reader)}).second) {
-                        return static_cast<void *>(file_reader.get());
-                    } else {
-                        GetLogger()->error("Failed to register file stream.");
-                    }
-                }
-            } else if (mode == 'w' || mode == 'a') {
-                unique_ptr<FileWriter> file_writer = make_unique<FileWriter>();
-            } else {
-                GetLogger()->error("Invalid file stream mode '{}'.", mode);
-            }
-            // stream.url = filename;
-            // if (FOpen(stream, filename) == 0 && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
-            //     return handle;
-            // }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
+        if (!CheckIsFileUrl(filename)) return KO;
+        if (mode != 'r' && mode != 'w' && mode != 'a') {
+            GetLogger()->error("Invalid file stream mode '{}'.", mode);
+            return KO;
         }
+        if (mode == 'r') {
+            unique_ptr<FileReader> file_reader = make_unique<FileReader>();
+            if (PopulateFileReader(file_reader.get(), filename) != 0) return KO;
+            if (!GetState()->file_readers.insert({static_cast<void *>(file_reader.get()), std::move(file_reader)}).second) {
+                GetLogger()->error("Failed to register file stream.");
+                return KO;
+            }
+            return static_cast<void *>(file_reader.get());
+        } else if (mode == 'w' || mode == 'a') {
+            unique_ptr<FileWriter> file_writer = make_unique<FileWriter>();
+        }
+        // stream.url = filename;
+        // if (FOpen(stream, filename) == 0 && GetState()->file_stream_registry.AddStream(&handle, std::move(stream)) == 0) {
+        //     return handle;
+        // }
     })
-    return nullptr;
 }
 
 int driver_fclose(void *stream) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Closing file with handle {}...", stream);
-        if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)) {
-            FileReader *file_reader;
-            FileWriter *file_writer;
-            if (FindFileReader(&file_reader, stream)) {
-                if (FCloseReader(*file_reader) == 0 && GetState()->file_readers.erase(stream) == 1ULL) {
-                    return kSuccess;
-                } else {
-                    GetLogger()->error("Failed to unregister file stream.");
-                }
-            } else if (FindFileWriter(&file_writer, stream)) {
-                if (FCloseWriter(*file_writer) == 0 && GetState()->file_writers.erase(stream) == 1ULL) {
-                    return kSuccess;
-                } else {
-                    GetLogger()->error("Failed to unregister file stream.");
-                }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
+        FileReader *file_reader; FileWriter *file_writer;
+        if (FindFileReader(&file_reader, stream)) {
+            if (FCloseReader(*file_reader) != 0) return KO;
+            if (GetState()->file_readers.erase(stream) == 0ULL) {
+                GetLogger()->error("Failed to unregister file stream.");
+                return KO;
             } else {
-                GetLogger()->error("No file open with handle {}.", stream);
+                return kSuccess;
             }
+        } else if (FindFileWriter(&file_writer, stream)) {
+            if (FCloseWriter(*file_writer) != 0) return KO;
+            if (GetState()->file_writers.erase(stream) == 0ULL) {
+                GetLogger()->error("Failed to unregister file stream.");
+                return KO;
+            } else {
+                return kSuccess;
+            }
+        } else {
+            GetLogger()->error("No file open with handle {}.", stream);
+            return KO;
         }
     })
-    return kFailure;
 }
 
 long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
+    const long long int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(ptr, STRINGIFY(ptr), __func__)) return KO;
+        if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
         FileReader *file_reader;
+        if (GetFileReader(&file_reader, stream) != 0) return KO;
         size_t nread;
-        if (
-            CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetFileReader(&file_reader, stream) == 0
-            && FRead(&nread, ptr, file_reader, size, count) == 0 && nread != 0ULL
-        ) {
-            return static_cast<long long int>(nread);
-        }
+        if (FRead(&nread, ptr, file_reader, size, count) != 0) return KO;
+        if (nread == 0ULL) return KO;
+        return static_cast<long long int>(nread);
     })
-    return kFailure;
 }
 
 int driver_fseek(void *stream, long long int offset, int whence) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
         FileReader *file_reader;
-        if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)) {
-            if (whence == ios::beg || whence == ios::cur || whence == ios::end) {
-                if (GetFileReader(&file_reader, stream) == 0) {
-                    if (whence == ios::beg) {
-                        if (0LL <= offset && offset <= file_reader->total_size) {
-                            file_reader->current_position = static_cast<size_t>(offset);
-                            return kSuccess;
-                        }
-                    } else if (whence == ios::cur) {
-                        if (offset < 0LL) {
-                            size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
-                            if (positive_offset <= file_reader->current_position) {
-                                file_reader->current_position -= positive_offset;
-                                return kSuccess;
-                            }
-                        } else {
-                            if (static_cast<size_t>(offset) <= file_reader->total_size - file_reader->current_position) {
-                                file_reader->current_position += static_cast<size_t>(offset);
-                                return kSuccess;
-                            }
-                        }
-                    } else if (whence == ios::end) {
-                        if (offset < 0LL) {
-                            size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
-                            if (positive_offset <= file_reader->total_size) {
-                                file_reader->current_position = file_reader->total_size - positive_offset;
-                                return kSuccess;
-                            }
-                        } else if (offset == 0LL) {
-                            return kSuccess;
-                        }
-                    }
-                    GetLogger()->error("Seeking out of file's range.");
+        if (whence != ios::beg && whence != ios::cur && whence != ios::end) {
+            GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
+            return KO;
+        }
+        if (GetFileReader(&file_reader, stream) != 0) return KO;
+        bool seek_out_of_range = false;
+        if (whence == ios::beg) {
+            if (offset < 0LL || offset > file_reader->total_size) {
+                seek_out_of_range = true;
+            } else {
+                file_reader->current_position = static_cast<size_t>(offset);
+            }
+        } else if (whence == ios::cur) {
+            if (offset < 0LL) {
+                size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
+                if (positive_offset > file_reader->current_position) {
+                    seek_out_of_range = true;
+                } else {
+                    file_reader->current_position -= positive_offset;
                 }
             } else {
-                GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
+                if (static_cast<size_t>(offset) > file_reader->total_size - file_reader->current_position) {
+                    seek_out_of_range = true;
+                } else {
+                    file_reader->current_position += static_cast<size_t>(offset);
+                }
+            }
+        } else if (whence == ios::end) {
+            if (offset < 0LL) {
+                size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
+                if (positive_offset > file_reader->total_size) {
+                    seek_out_of_range = true;
+                } else {
+                    file_reader->current_position = file_reader->total_size - positive_offset;
+                }
+            } else if (offset == 0LL) {
             }
         }
+        if (seek_out_of_range) {
+            GetLogger()->error("Seeking out of file's range.");
+            return KO;
+        } else {
+            return kSuccess;
+        }
     })
-    return kFailure;
 }
 
 const char *driver_getlasterror() {
+    const char *const KO = "Error while trying to fetch last error.";
     CATCH_ALL({
         GetLogger()->info("Retrieving last error...");
         static string last_error = GetLastError();
         return last_error.empty() ? nullptr : last_error.c_str();
     })
-    return "Error while trying to fetch last error.";
 }
 
 long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *stream) {
+    const long long int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Writing {}x{} bytes from {} to file with handle {}...", size, count, ptr, stream);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(ptr, STRINGIFY(ptr), __func__)) return KO;
+        if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
         FileWriter *file_writer;
+        if (GetFileWriter(&file_writer, stream) != 0) return KO;
         size_t nwritten;
-        if (
-            CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetFileWriter(&file_writer, stream) == 0 && FWrite(&nwritten, *file_writer, ptr, size, count) == 0
-        ) {
-            return static_cast<long long int>(nwritten);
-        }
+        if (FWrite(&nwritten, *file_writer, ptr, size, count) != 0) return KO;
+        return static_cast<long long int>(nwritten);
     })
-    return kFailure;
 }
 
 int driver_fflush(void *stream) {
+    const int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Flushing file with handle {}...", stream);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
         FileWriter *file_writer;
-        if (
-            CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)
-            && GetFileWriter(&file_writer, stream) == 0 && FFlush(*file_writer)
-        ) {
-            return kSuccess;
-        }
+        if (GetFileWriter(&file_writer, stream) != 0) return KO;
+        if (FFlush(*file_writer) != 0) return KO;
+        return kSuccess;
     })
-    return kFailure;
 }
 
 int driver_remove(const char *filename) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Removing file at URL {}...", filename);
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && CheckIsFileUrl(filename) && Remove(filename) == 0) {
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
+        if (!CheckIsFileUrl(filename)) return KO;
+        if (Remove(filename) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_mkdir(const char *pathname) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Creating directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && CheckIsDirUrl(pathname) && Mkdir(pathname) == 0) {
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(pathname, STRINGIFY(pathname), __func__)) return KO;
+        if (!CheckIsDirUrl(pathname)) return KO;
+        if (Mkdir(pathname) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_rmdir(const char *pathname) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Removing directory at URL {}...", pathname);
-        if (CheckInitialized() && CheckNotNull(pathname, STRINGIFY(pathname), __func__) && CheckIsDirUrl(pathname) && Rmdir(pathname) == 0) {
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(pathname, STRINGIFY(pathname), __func__)) return KO;
+        if (!CheckIsDirUrl(pathname)) return KO;
+        if (Rmdir(pathname) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 long long int driver_diskFreeSpace(const char *filename) {
+    const long long int KO = kFailure;
     CATCH_ALL({
         GetLogger()->info("Retrieving free disk space at URL {}...", filename);
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
         size_t free_space;
-        if (CheckInitialized() && CheckNotNull(filename, STRINGIFY(filename), __func__) && DiskFreeSpace(&free_space, filename) == 0) {
-            return free_space;
-        }
+        if (DiskFreeSpace(&free_space, filename) != 0) return KO;
+        return free_space;
     })
-    return kFailure;
 }
 
 int driver_copyToLocal(const char *sourcefilename, const char *destfilename) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
-        if (
-            CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
-            && CheckIsFileUrl(sourcefilename) && CheckIsFileUrl(destfilename)
-            && CopyToLocal(sourcefilename, destfilename) == 0
-        ) {
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__)) return KO;
+        if (!CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)) return KO;
+        if (!CheckIsFileUrl(sourcefilename)) return KO;
+        if (!CheckIsFileUrl(destfilename)) return KO;
+        if (CopyToLocal(sourcefilename, destfilename) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Copying file at URL {} to URL {}...", sourcefilename, destfilename);
-        if (
-            CheckInitialized() && CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__) && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
-            && CheckIsFileUrl(sourcefilename) && CheckIsFileUrl(destfilename)
-            && CopyFromLocal(sourcefilename, destfilename) == 0
-        ) {
-            return kOtherSuccess;
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(sourcefilename, STRINGIFY(sourcefilename), __func__)) return KO;
+        if (!CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)) return KO;
+        if (!CheckIsFileUrl(sourcefilename)) return KO;
+        if (!CheckIsFileUrl(destfilename)) return KO;
+        if (CopyFromLocal(sourcefilename, destfilename) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_concat(const char *destfilename, const char **sourcefilenames, size_t sourcefilecount) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Concatenating {} files to URL {}...", sourcefilecount, destfilename);
         for (size_t i = 0; i < sourcefilecount; i++) {
             GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
         }
-        if (
-            CheckInitialized() && CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)
-            && CheckNotNull(sourcefilenames, STRINGIFY(sourcefilenames), __func__)
-            && sourcefilecount >= 2
-        ) {
-            if (Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) == 0) {
-                return kOtherSuccess;
-            }
-        } else {
-            GetLogger()->error("Too few files to concatenate.");
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)) return KO;
+        if (!CheckNotNull(sourcefilenames, STRINGIFY(sourcefilenames), __func__)) return KO;
+        if (sourcefilecount < 2) { GetLogger()->error("Too few files to concatenate."); return KO; }
+        if (Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
 
 int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceFilePathNames, size_t nSourceFileCount) {
+    const int KO = kOtherFailure;
     CATCH_ALL({
         GetLogger()->info("Composing {} files into one multifile {}...", nSourceFileCount, sDestFilePathName);
         for (size_t i = 0; i < nSourceFileCount; i++) {
             GetLogger()->info("  Source file #{}: {}", i + 1, sSourceFilePathNames[i]);
         }
-        if (
-            CheckInitialized() && CheckNotNull(sDestFilePathName, STRINGIFY(sDestFilePathName), __func__)
-            && CheckNotNull(sSourceFilePathNames, STRINGIFY(sSourceFilePathNames), __func__)
-            && nSourceFileCount >= 2
-        ) {
-            if (Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) == 0) {
-                return kOtherSuccess;
-            }
-        } else {
-            GetLogger()->error("Too few files to compose a multifile.");
-        }
+        if (!CheckInitialized()) return KO;
+        if (!CheckNotNull(sDestFilePathName, STRINGIFY(sDestFilePathName), __func__)) return KO;
+        if (!CheckNotNull(sSourceFilePathNames, STRINGIFY(sSourceFilePathNames), __func__)) return KO;
+        if (nSourceFileCount < 2) { GetLogger()->error("Too few files to compose a multifile."); return KO; }
+        if (Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) != 0) return KO;
+        return kOtherSuccess;
     })
-    return kOtherFailure;
 }
