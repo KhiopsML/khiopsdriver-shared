@@ -12,6 +12,10 @@ namespace khiops_driver_common {
  ******************************************************/
 
 spdlog::logger *GetLogger();
+void FreeFileReaderFragmentVersion(FileReader::Fragment *file_reader);
+void FreeFileWriterUserData(FileWriter *file_writer);
+int SetFileWriterUserDataWriteMode(FileWriter *file_writer);
+int SetFileWriterUserDataAppendMode(FileWriter *file_writer);
 int ListFragments(std::vector<std::string> *result, const std::string &url);
 int GetFragmentSizeAndVersion(size_t *size_result, void **version_result, const std::string &url);
 int ReadFragment(std::string *result, bool *stopped_on_termchar, const std::string &url, void *version, size_t offset, size_t maxlength);
@@ -29,14 +33,12 @@ int GetFileSize(size_t *result, const std::string &filename);
 int FCloseReader(const FileReader &stream);
 int FCloseWriter(const FileWriter &stream);
 int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
-int FWrite(size_t *result, const FileWriter &file_writer, const void *ptr, size_t size, size_t count);
+int FWrite(size_t *result, FileWriter *file_writer, const void *ptr, size_t size, size_t count);
 int FFlush(const FileWriter &file_writer);
 int Remove(const std::string &filename);
 int Mkdir(const std::string &pathname);
 int Rmdir(const std::string &pathname);
 int DiskFreeSpace(size_t *result, const std::string &filename);
-int CopyToLocal(const std::string &sourcefilename, const std::string &destfilename);
-int CopyFromLocal(const std::string &sourcefilename, const std::string &destfilename);
 int Concat(const std::string &destfilename, const std::vector<std::string> &sourcefilenames);
 int ComposeMultifile(const std::string &sDestFilePathName, const std::vector<std::string> &sSourceFilePathNames);
 

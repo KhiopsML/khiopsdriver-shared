@@ -8,7 +8,7 @@ using namespace std;
 
 namespace khiops_driver_common {
 
-int PopulateFileReader(FileReader *file_reader, const std::string &url) {
+int PopulateFileReader(FileReader *file_reader, const string &url) {
     if (file_reader == nullptr) {
         GetLogger()->error("Null pointer passed to function {}.", __func__);
         return -1;
