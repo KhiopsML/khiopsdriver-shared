@@ -383,7 +383,7 @@ int driver_fseek(void *stream, long long int offset, int whence) {
         if (GetFileReader(&file_reader, stream) != 0) return KO;
         bool seek_out_of_range = false;
         if (whence == ios::beg) {
-            if (offset < 0LL || offset > file_reader->total_size) {
+            if (offset < 0LL || static_cast<size_t>(offset) > file_reader->total_size) {
                 seek_out_of_range = true;
             } else {
                 file_reader->current_position = static_cast<size_t>(offset);
