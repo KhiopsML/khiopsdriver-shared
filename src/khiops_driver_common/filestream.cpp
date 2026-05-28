@@ -8,6 +8,8 @@ using namespace std;
 
 namespace khiops_driver_common {
 
+FileReader::Fragment::~Fragment() { FreeFileReaderFragmentVersion(this); }
+
 int PopulateFileReader(FileReader *file_reader, const string &url) {
     if (file_reader == nullptr) {
         GetLogger()->error("Null pointer passed to function {}.", __func__);
@@ -80,7 +82,7 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
                     return -1;
                 }
 
-                if (!stopped_on_termchar || header_just_read.empty() || fragment_index > 0ULL && header_just_read != possible_header) {
+                if (!stopped_on_termchar || header_just_read.empty() || (fragment_index > 0ULL && header_just_read != possible_header)) {
                     there_may_be_a_header = false;
                 } else if (fragment_index == 0ULL) {
                     possible_header_length = header_just_read.size();
@@ -135,5 +137,7 @@ int FragmentIndexOfUserOffset(size_t *result, const FileReader &file_reader, siz
     );
     return 0;
 }
+
+FileWriter::~FileWriter() { FreeFileWriterUserData(this); }
 
 }

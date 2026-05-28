@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include "khiops_driver_common/backend.hpp"
 
 namespace khiops_driver_common {
 
@@ -20,8 +19,7 @@ struct FileReader {
         size_t content_size;
         // The version of the file is used to detect if the file has been modified before a reading.
         void *version = nullptr;
-        // This function below must be implemented by the driver to free the memory allocated to the member above.
-        inline ~Fragment() { FreeFileReaderFragmentVersion(this); }
+        ~Fragment();
     };
     // Fragments can have an empty content or may be considered to have an empty content if there is a repeated header, if they are not the first fragment and there content consists only of the header.
     // Empty fragments are not removed from the vector below because they can be modified between readings and become non-empty.
@@ -43,7 +41,7 @@ struct FileWriter {
     std::string url;
     size_t current_position;
     void *user_data = nullptr;
-    inline ~FileWriter() { FreeFileWriterUserData(this); }
+    ~FileWriter();
 };
 
 }

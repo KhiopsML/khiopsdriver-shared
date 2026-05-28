@@ -5,12 +5,11 @@ set(KhiopsDriverCommonSources
     driver.cpp
     filestream.hpp
     filestream.cpp
-    filestreamregistry.hpp
-    filestreamregistry.cpp
     logging.hpp
     logging.cpp
     returnval.hpp
     stringify.hpp
     util.hpp
+    util.cpp
 )
 list(TRANSFORM KhiopsDriverCommonSources PREPEND src/khiops_driver_common/)
