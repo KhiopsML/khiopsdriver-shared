@@ -2,6 +2,7 @@
 #include "khiops_driver_common/logging.hpp"
 #include "khiops_driver_common/backend.hpp"
 #include "khiops_driver_common/util.hpp"
+#include <algorithm>
 
 using namespace std;
 
@@ -117,6 +118,19 @@ int PopulateFileReader(FileReader *file_reader, const std::string &url) {
         current_user_offset += fragment_content_size;
     }
 
+    return 0;
+}
+
+int FragmentIndexOfUserOffset(size_t *result, const FileReader &file_reader, size_t user_offset) {
+    if (file_reader.fragments.empty()) { GetLogger()->error("No fragments found."); return -1; }
+    *result = static_cast<size_t>(
+        find_if(
+            file_reader.fragments.begin(), file_reader.fragments.end(),
+            [user_offset](const FileReader::Fragment &fragment) { return user_offset < fragment.user_offset; }
+        )
+        - 1
+        - file_reader.fragments.begin()
+    );
     return 0;
 }
 

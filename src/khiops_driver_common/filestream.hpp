@@ -31,6 +31,7 @@ struct FileReader {
 };
 
 int PopulateFileReader(FileReader *file_reader, const std::string &url);
+int FragmentIndexOfUserOffset(size_t *result, const FileReader &file_reader, size_t user_offset);
 
 struct FileWriter {};
 
