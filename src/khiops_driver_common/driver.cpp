@@ -307,12 +307,12 @@ void *driver_fopen(const char *filename, char mode) {
             file_writer->url = filename;
             if (mode == 'w') {
                 file_writer->current_position = 0;
-                if (SetFileWriterUserDataWriteMode(file_writer.get()) != 0) return KO;
+                if (InitializeFileWriterWithWriteMode(file_writer.get()) != 0) return KO;
             } else if (mode == 'a') {
                 size_t file_size;
                 if (GetFileSize(&file_size, filename) != 0) return KO;
                 file_writer->current_position = file_size;
-                if (SetFileWriterUserDataAppendMode(file_writer.get()) != 0) return KO;
+                if (InitializeFileWriteWithAppendMode(file_writer.get()) != 0) return KO;
             }
             if (!GetState()->file_writers.insert({static_cast<void *>(file_writer.get()), std::move(file_writer)}).second) {
                 GetLogger()->error("Failed to register file stream.");
@@ -561,7 +561,7 @@ int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
         ifstream ifs;
         size_t ntotalcopied = 0ULL, ntocopy, nread, nwritten, total_size;
 
-        if (SetFileWriterUserDataWriteMode(&file_writer) != 0) return -1;
+        if (InitializeFileWriterWithWriteMode(&file_writer) != 0) return -1;
         if (GetSystemPreferredBufferSize(&buffer_size) != 0) return -1;
         buffer = make_unique<char[]>(buffer_size);
         ifs = ifstream(sourcefilename, ios::binary);
