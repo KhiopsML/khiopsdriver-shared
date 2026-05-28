@@ -354,12 +354,43 @@ int driver_fseek(void *stream, long long int offset, int whence) {
     CATCH_ALL({
         GetLogger()->info("Seeking offset {} from origin {} in file with handle {}...", offset, whence, stream);
         FileReader *file_reader;
-        if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__) && 0 <= whence && whence <= 2) {
-            if (GetFileReader(&file_reader, stream) == 0 && FSeek(*file_reader, offset, whence) == 0) {
-                return kSuccess;
+        if (CheckInitialized() && CheckNotNull(stream, STRINGIFY(stream), __func__)) {
+            if (whence == ios::beg || whence == ios::cur || whence == ios::end) {
+                if (GetFileReader(&file_reader, stream) == 0) {
+                    if (whence == ios::beg) {
+                        if (0LL <= offset && offset <= file_reader->total_size) {
+                            file_reader->current_position = static_cast<size_t>(offset);
+                            return kSuccess;
+                        }
+                    } else if (whence == ios::cur) {
+                        if (offset < 0LL) {
+                            size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
+                            if (positive_offset <= file_reader->current_position) {
+                                file_reader->current_position -= positive_offset;
+                                return kSuccess;
+                            }
+                        } else {
+                            if (static_cast<size_t>(offset) <= file_reader->total_size - file_reader->current_position) {
+                                file_reader->current_position += static_cast<size_t>(offset);
+                                return kSuccess;
+                            }
+                        }
+                    } else if (whence == ios::end) {
+                        if (offset < 0LL) {
+                            size_t positive_offset = static_cast<size_t>(-(offset + 1LL)) + 1ULL;
+                            if (positive_offset <= file_reader->total_size) {
+                                file_reader->current_position = file_reader->total_size - positive_offset;
+                                return kSuccess;
+                            }
+                        } else if (offset == 0LL) {
+                            return kSuccess;
+                        }
+                    }
+                    GetLogger()->error("Seeking out of file's range.");
+                }
+            } else {
+                GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
             }
-        } else {
-            GetLogger()->error("Tried to seek from invalid origin '{}'.", whence);
         }
     })
     return kFailure;
