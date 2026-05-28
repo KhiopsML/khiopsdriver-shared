@@ -342,7 +342,7 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
         if (
             CheckInitialized() && CheckNotNull(ptr, STRINGIFY(ptr), __func__) && CheckNotNull(stream, STRINGIFY(stream), __func__)
             && GetFileReader(&file_reader, stream) == 0
-            && FRead(&nread, ptr, *file_reader, size, count) == 0 && nread != 0ULL
+            && FRead(&nread, ptr, file_reader, size, count) == 0 && nread != 0ULL
         ) {
             return static_cast<long long int>(nread);
         }
