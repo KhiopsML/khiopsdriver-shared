@@ -19,6 +19,7 @@
 using namespace std;
 
 // Macro that must be used in all public functions to avoid raising exceptions
+// It is variadic just to avoid splitting the code on commas outside of parentheses (otherwise the preprocessor thinks there are multiple macro arguments).
 #define CATCH_ALL(...) \
     do { \
         try { \
