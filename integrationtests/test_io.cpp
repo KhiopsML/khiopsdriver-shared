@@ -30,8 +30,7 @@ TEST_F(IoTest, FSeekMultipartFile) { TestFSeek(url.MultisplitFile(), true); }
 
 void TestFSeek(string sUrl, bool bCrLf) {
   void *handle;
-  char *buffer = new char[32];
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
+  char buffer[32];
   ASSERT_NE(handle = driver_fopen(sUrl.c_str(), 'r'), nullptr);
 
   ASSERT_EQ(driver_fseek(handle, bCrLf ? 929 : 922, 0), kSuccess);
@@ -50,16 +49,12 @@ void TestFSeek(string sUrl, bool bCrLf) {
   ASSERT_STREQ(buffer, "Never-married");
 
   ASSERT_EQ(driver_fclose(handle), kSuccess);
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
-  delete[] buffer;
 }
 
 TEST_F(IoTest, FReadAtEndOfFile) {
   char ibuffer[64];
   void *ihandle;
   long long int filesize;
-
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
 
   // We want the file to be at least 10-byte long
   ASSERT_GT(filesize = driver_getFileSize(url.File().c_str()), 10);
@@ -88,8 +83,6 @@ TEST_F(IoTest, FReadAtEndOfFile) {
   ASSERT_STREQ(ibuffer, "e\n"); // Buffer content unchanged
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
-
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
 }
 
 TEST_F(IoTest, FReadWithConcurrentWrite) {
@@ -97,8 +90,6 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   char ibuffer[64]{};
   void *ihandle;
   void *ohandle;
-
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
 
   // Write initial data to the file
   ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'w'), nullptr);
@@ -143,6 +134,4 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
   ASSERT_EQ(driver_remove(file.c_str()), kOtherSuccess);
-
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
 }
