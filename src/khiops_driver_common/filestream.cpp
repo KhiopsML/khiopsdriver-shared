@@ -92,7 +92,7 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
 
     // From now on, we know if there is a repeated header or not, and if there is one we know its content and, more importantly, its size.
     bool there_is_a_header = there_may_be_a_header;
-    size_t header_length = possible_header_length;
+    size_t header_length = there_is_a_header ? possible_header_length : 0ULL;
     
     file_reader->total_size = 0ULL;
     file_reader->header_length = header_length;

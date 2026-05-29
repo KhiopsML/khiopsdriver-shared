@@ -271,7 +271,7 @@ int driver_dirExists(const char *sFilePathName) {
 }
 
 long long int driver_getFileSize(const char *filename) {
-    const int KO = kFailure;
+    const long long int KO = kFailure;
     CATCH_ALL(
         GetLogger()->info("Retrieving size of file at URL {}...", filename);
         if (!CheckInitialized()) return KO;
@@ -321,6 +321,9 @@ void *driver_fopen(const char *filename, char mode) {
                 return KO;
             }
             return handle;
+        } else {
+            // Should never happen but need to make the compiler happy.
+            return KO;
         }
     );
 }
