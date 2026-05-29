@@ -57,11 +57,11 @@ bool RandomBool() {
 
 namespace khiops_driver_common { namespace util { namespace env {
 std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging) {
-    char *value = getenv(sVarName.c_str());
+    const char *value = getenv(sVarName.c_str());
     if (value) {
         if (strlen(value) > 0ULL) {
             if (!bForbidLogging) {
-                khiops_driver_common::GetLogger()->debug("Environment variable {} is set to: {}.", sVarName, value);
+                khiops_driver_common::GetLogger()->debug("Environment variable {} is set to: {}.", sVarName, sVarName.find("CONNECTION_STRING") == std::string::npos ? value : "**REDACTED**");
             }
             return value;
         } else if (!bForbidLogging) {
