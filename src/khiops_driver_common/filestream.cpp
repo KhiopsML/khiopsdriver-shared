@@ -8,8 +8,6 @@ using namespace std;
 
 namespace khiops_driver_common {
 
-FileReader::Fragment::~Fragment() { FreeFileReaderFragmentVersion(this); }
-
 int PopulateFileReader(FileReader *file_reader, const string &url) {
     if (file_reader == nullptr) {
         GetLogger()->error("Null pointer passed to function {}.", __func__);
@@ -96,8 +94,6 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
     bool there_is_a_header = there_may_be_a_header;
     size_t header_length = possible_header_length;
     
-    // Create the file reader object.
-    *file_reader = FileReader();
     file_reader->total_size = 0ULL;
     file_reader->header_length = header_length;
     file_reader->current_position = 0ULL;
@@ -112,8 +108,8 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
         fragment.url = fragment_urls[fragment_index];
         fragment.user_offset = current_user_offset;
         fragment.content_size = fragment_content_size;
-        fragment.version = fragment_versions[fragment_index];
-        file_reader->fragments.push_back(fragment);
+        fragment.version.reset(fragment_versions[fragment_index]);
+        file_reader->fragments.push_back(std::move(fragment));
 
         // Update the total size of the file.
         file_reader->total_size += fragment_content_size;
@@ -137,7 +133,5 @@ int FragmentIndexOfUserOffset(size_t *result, const FileReader &file_reader, siz
     );
     return 0;
 }
-
-FileWriter::~FileWriter() { FreeFileWriterUserData(this); }
 
 }

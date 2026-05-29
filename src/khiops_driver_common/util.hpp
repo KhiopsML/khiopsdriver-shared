@@ -19,6 +19,7 @@ A collection of utilities.
 #include <spdlog/spdlog.h>
 
 namespace khiops_driver_common {
+using CustomVoidUniquePtr = std::unique_ptr<void, void (*)(void *)>;
 namespace util {
 namespace str {
 std::vector<std::string> Split(const std::string &str, char delim, long long int nMaxSplits = -1, bool bRemoveEmpty = false);

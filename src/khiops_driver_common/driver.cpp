@@ -296,14 +296,16 @@ void *driver_fopen(const char *filename, char mode) {
         }
         if (mode == 'r') {
             unique_ptr<FileReader> file_reader = make_unique<FileReader>();
+            void *handle = static_cast<void *>(file_reader.get());
             if (PopulateFileReader(file_reader.get(), filename) != 0) return KO;
-            if (!GetState()->file_readers.insert({static_cast<void *>(file_reader.get()), std::move(file_reader)}).second) {
+            if (!GetState()->file_readers.insert({handle, std::move(file_reader)}).second) {
                 GetLogger()->error("Failed to register file stream.");
                 return KO;
             }
-            return static_cast<void *>(file_reader.get());
+            return handle;
         } else if (mode == 'w' || mode == 'a') {
             unique_ptr<FileWriter> file_writer = make_unique<FileWriter>();
+            void *handle = static_cast<void *>(file_writer.get());
             file_writer->url = filename;
             if (mode == 'w') {
                 file_writer->current_position = 0;
@@ -314,11 +316,11 @@ void *driver_fopen(const char *filename, char mode) {
                 file_writer->current_position = file_size;
                 if (InitializeFileWriteWithAppendMode(file_writer.get()) != 0) return KO;
             }
-            if (!GetState()->file_writers.insert({static_cast<void *>(file_writer.get()), std::move(file_writer)}).second) {
+            if (!GetState()->file_writers.insert({handle, std::move(file_writer)}).second) {
                 GetLogger()->error("Failed to register file stream.");
                 return KO;
             }
-            return static_cast<void *>(file_writer.get());
+            return handle;
         }
     );
 }

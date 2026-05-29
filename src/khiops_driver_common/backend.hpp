@@ -12,8 +12,8 @@ namespace khiops_driver_common {
  ******************************************************/
 
 spdlog::logger *GetLogger();
-void FreeFileReaderFragmentVersion(FileReader::Fragment *file_reader);
-void FreeFileWriterUserData(FileWriter *file_writer);
+void FreeFileReaderFragmentVersion(void *version);
+void FreeFileWriterUserData(void *user_data);
 int InitializeFileWriterWithWriteMode(FileWriter *file_writer);
 int InitializeFileWriteWithAppendMode(FileWriter *file_writer);
 int ListFragments(std::vector<std::string> *result, const std::string &url);
