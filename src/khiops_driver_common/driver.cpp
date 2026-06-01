@@ -362,14 +362,18 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
     const long long int KO = kFailure;
     CATCH_ALL(
         GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
+        
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(ptr, STRINGIFY(ptr), __func__)) return KO;
         if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
         FileReader *file_reader;
         if (GetFileReader(&file_reader, stream) != 0) return KO;
+        if (size != 0 && count > numeric_limits<size_t>::max() / size) { GetLogger()->error("'size' x 'count' exceeds {}.", numeric_limits<size_t>::max()); return KO; }
+        
         size_t nread;
-        if (FRead(&nread, ptr, file_reader, size, count) != 0) return KO;
-        if (nread == 0ULL) return KO;
+        if (khiops_driver_common::FRead(&nread, ptr, file_reader, size, count) != 0) return KO;
+
+        // if (ntotalread == 0ULL) return KO;
         return static_cast<long long int>(nread);
     );
 }

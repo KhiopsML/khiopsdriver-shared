@@ -32,7 +32,7 @@ int DirExists(bool *result, const std::string &sFilePathName);
 int GetFileSize(size_t *result, const std::string &filename);
 int FCloseReader(const FileReader &stream);
 int FCloseWriter(const FileWriter &stream);
-int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
+// int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
 int FWrite(size_t *result, FileWriter *file_writer, const void *ptr, size_t size, size_t count);
 int FFlush(const FileWriter &file_writer);
 int Remove(const std::string &filename);

@@ -104,3 +104,50 @@ bool IsDirUrl(const std::string &url) {
     return url.size() > 0 && url.back() == '/';
 }
 }}
+
+namespace khiops_driver_common {
+int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count) {
+    const size_t ntotaltoread = size * count;
+    size_t nlefttoread = ntotaltoread, ntotalread = 0ULL, ntoread, nread;
+    size_t offset_inside_first_fragment_to_read, fragment_remote_offset;
+    size_t absolute_fragment_index, relative_fragment_index;
+    std::string globalread, read;
+    bool stopped_on_term_char;
+    
+    GetLogger()->debug("Reading starting position: {}  |  Total number of bytes to read: {}  |  Total file size: {}.", file_reader->current_position, file_reader->total_size, ntotaltoread);
+    
+    if (ntotaltoread == 0ULL) {  // 0 byte to read => fast-exit.
+        *result = 0ULL;
+        return 0;
+    }
+
+    if (FragmentIndexOfUserOffset(&absolute_fragment_index, *file_reader, file_reader->current_position) != 0) return -1;
+
+    for (relative_fragment_index = 0ULL; nlefttoread > 0ULL ; relative_fragment_index++, absolute_fragment_index++) {
+        const FileReader::Fragment &fragment = file_reader->fragments[absolute_fragment_index];
+        if (relative_fragment_index == 0ULL) {
+            offset_inside_first_fragment_to_read = file_reader->current_position - fragment.user_offset;
+            fragment_remote_offset = (absolute_fragment_index == 0ULL ? 0ULL : file_reader->header_length) + offset_inside_first_fragment_to_read;
+            ntoread = std::min(nlefttoread, fragment.content_size - offset_inside_first_fragment_to_read);
+        } else {
+            fragment_remote_offset = file_reader->header_length;
+            ntoread = std::min(nlefttoread, fragment.content_size);
+        }
+        if (ReadFragment(&read, &stopped_on_term_char, fragment.url, fragment.version.get(), fragment_remote_offset, ntoread) != 0) {
+            GetLogger()->error("Failed to read.");
+            return -1;
+        }
+        nread = read.size();
+        GetLogger()->trace("File fragment #{} (absolute #{}): read {} bytes.", relative_fragment_index, absolute_fragment_index, nread);
+        if (nread != ntoread) { GetLogger()->error("Number of bytes read does not match number of bytes to read."); return -1; }
+        ntotalread += nread;
+        globalread.append(read);
+        nlefttoread -= nread;
+        file_reader->current_position += nread;
+    }
+
+    *result = ntotalread;
+    memcpy(ptr, globalread.data(), ntotalread);
+    return 0;
+}
+}

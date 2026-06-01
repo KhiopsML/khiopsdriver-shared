@@ -41,7 +41,6 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
     string header_just_read;
     size_t possible_header_length = MAX_HEADER_LENGTH;
     
-    
     if (ListFragments(&fragment_urls, url) != 0) {
         // Failed to list remote objects matching the user-provided URL.
         return -1;
@@ -57,6 +56,9 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
         if (GetFragmentSizeAndVersion(&fragment_sizes[fragment_index], &current_fragment_version, fragment_urls[fragment_index]) != 0) {
             // Failed to get the size or the version of the current remote object.
             return -1;
+        }
+        if (fragment_index == 0ULL) {
+            possible_header_length = min(fragment_sizes[fragment_index], MAX_HEADER_LENGTH);
         }
         fragment_versions.emplace_back(current_fragment_version, &FreeFileReaderFragmentVersion);
 

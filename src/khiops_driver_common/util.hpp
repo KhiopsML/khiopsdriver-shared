@@ -42,4 +42,6 @@ int CheckIsNotGlobbingPattern(const std::string &str);
 // Function to detect if an URL points to a directory.
 bool IsDirUrl(const std::string &url);
 } // namespace util
+struct FileReader;  // Forward declaration
+int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
 } // namespace khiops_driver_common
