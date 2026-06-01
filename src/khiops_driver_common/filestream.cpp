@@ -49,13 +49,16 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
 
     const size_t total_number_of_fragments = fragment_urls.size();
     vector<size_t> fragment_sizes(total_number_of_fragments);
-    vector<void *> fragment_versions(total_number_of_fragments);
+    vector<CustomVoidUniquePtr> fragment_versions;
+    fragment_versions.reserve(total_number_of_fragments);
     
     for (size_t fragment_index = 0ULL; fragment_index < total_number_of_fragments; fragment_index++) {
-        if (GetFragmentSizeAndVersion(&fragment_sizes[fragment_index], &fragment_versions[fragment_index], fragment_urls[fragment_index]) != 0) {
+        void *current_fragment_version;
+        if (GetFragmentSizeAndVersion(&fragment_sizes[fragment_index], &current_fragment_version, fragment_urls[fragment_index]) != 0) {
             // Failed to get the size or the version of the current remote object.
             return -1;
         }
+        fragment_versions.emplace_back(current_fragment_version, &FreeFileReaderFragmentVersion);
 
         if (there_may_be_a_header) {
             if (fragment_index > 0ULL && fragment_sizes[fragment_index] < possible_header_length) {
@@ -75,7 +78,7 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
             if (should_read_header) {
                 // Read the header.
                 bool stopped_on_termchar;
-                if (ReadFragment(&header_just_read, &stopped_on_termchar, fragment_urls[fragment_index], fragment_versions[fragment_index], 0ULL, possible_header_length, '\n') != 0) {
+                if (ReadFragment(&header_just_read, &stopped_on_termchar, fragment_urls[fragment_index], fragment_versions[fragment_index].get(), 0ULL, possible_header_length, '\n') != 0) {
                     // Failed to read the header.
                     return -1;
                 }
@@ -108,7 +111,7 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
         fragment.url = fragment_urls[fragment_index];
         fragment.user_offset = current_user_offset;
         fragment.content_size = fragment_content_size;
-        fragment.version.reset(fragment_versions[fragment_index]);
+        fragment.version = std::move(fragment_versions[fragment_index]);
         file_reader->fragments.push_back(std::move(fragment));
 
         // Update the total size of the file.
