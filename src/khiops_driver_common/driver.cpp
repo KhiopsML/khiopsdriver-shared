@@ -361,7 +361,7 @@ int driver_fclose(void *stream) {
 long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
     const long long int KO = kFailure;
     CATCH_ALL(
-        GetLogger()->info("Reading {}x{} bytes from file with handle {} to {}...", size, count, stream, ptr);
+        GetLogger()->info("Reading {}x{} bytes from file with handle {} to buffer at {}...", size, count, stream, ptr);
         
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(ptr, STRINGIFY(ptr), __func__)) return KO;
@@ -443,7 +443,7 @@ const char *driver_getlasterror() {
 long long int driver_fwrite(const void *ptr, size_t size, size_t count, void *stream) {
     const long long int KO = kFailure;
     CATCH_ALL(
-        GetLogger()->info("Writing {}x{} bytes from {} to file with handle {}...", size, count, ptr, stream);
+        GetLogger()->info("Writing {}x{} bytes from buffer at {} to file with handle {}...", size, count, ptr, stream);
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(ptr, STRINGIFY(ptr), __func__)) return KO;
         if (!CheckNotNull(stream, STRINGIFY(stream), __func__)) return KO;
