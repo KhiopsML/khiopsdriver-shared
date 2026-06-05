@@ -114,14 +114,16 @@ int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_
     std::string globalread, read;
     bool stopped_on_term_char;
     
-    GetLogger()->debug("Reading starting position: {}  |  Total number of bytes to read: {}  |  Total file size: {}.", file_reader->current_position, file_reader->total_size, ntotaltoread);
+    GetLogger()->debug("Reading starting position: {}  |  Total number of bytes to read: {}  |  Total file size: {}.", file_reader->current_position, ntotaltoread, file_reader->total_size);
     
-    if (ntotaltoread == 0ULL) {  // 0 byte to read => fast-exit.
+    if (ntotaltoread == 0ULL) {
+        GetLogger()->trace("0 byte to read => fast-exit.");
         *result = 0ULL;
         return 0;
     }
 
     if (FragmentIndexOfUserOffset(&absolute_fragment_index, *file_reader, file_reader->current_position) != 0) return -1;
+    GetLogger()->debug("Selected fragment #{}.", absolute_fragment_index);
 
     for (relative_fragment_index = 0ULL; nlefttoread > 0ULL ; relative_fragment_index++, absolute_fragment_index++) {
         const FileReader::Fragment &fragment = file_reader->fragments[absolute_fragment_index];
@@ -133,7 +135,7 @@ int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_
             fragment_remote_offset = file_reader->header_length;
             ntoread = std::min(nlefttoread, fragment.content_size);
         }
-        if (ReadFragment(&read, &stopped_on_term_char, fragment.url, fragment.version.get(), fragment_remote_offset, ntoread) != 0) {
+        if (ReadFragment(&read, &stopped_on_term_char, fragment, fragment_remote_offset, ntoread) != 0) {
             GetLogger()->error("Failed to read.");
             return -1;
         }

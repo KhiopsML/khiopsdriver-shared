@@ -286,7 +286,7 @@ long long int driver_getFileSize(const char *filename) {
 void *driver_fopen(const char *filename, char mode) {
     void *const KO = nullptr;
     CATCH_ALL(
-        GetLogger()->info("Opening file at URL {} in mode {}...", filename, mode);
+        GetLogger()->info("Opening file at URL {} in mode '{}'...", filename, mode);
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(filename, STRINGIFY(filename), __func__)) return KO;
         if (!CheckIsFileUrl(filename)) return KO;
@@ -373,7 +373,6 @@ long long int driver_fread(void *ptr, size_t size, size_t count, void *stream) {
         size_t nread;
         if (khiops_driver_common::FRead(&nread, ptr, file_reader, size, count) != 0) return KO;
 
-        // if (ntotalread == 0ULL) return KO;
         return static_cast<long long int>(nread);
     );
 }
