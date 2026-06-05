@@ -76,7 +76,7 @@ TEST_F(IoTest, FReadAtEndOfFile) {
   ibuffer[2] = 0;
   ASSERT_STREQ(ibuffer, "e\n");
   // Trying to read four bytes while we are already at the end of the file...
-  // should raise an error
+  // it should raise an error
   ASSERT_EQ(driver_fread(ibuffer, 1, 4, ihandle), kFailure);
   ASSERT_THAT(driver_getlasterror(),
               testing::HasSubstr("Cannot read after end of file."));
