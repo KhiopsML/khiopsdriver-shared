@@ -311,9 +311,15 @@ void *driver_fopen(const char *filename, char mode) {
                 file_writer->current_position = 0;
                 if (InitializeFileWriterWithWriteMode(file_writer.get()) != 0) return KO;
             } else if (mode == 'a') {
-                size_t file_size;
-                if (GetFileSize(&file_size, filename) != 0) return KO;
-                file_writer->current_position = file_size;
+                bool file_exists;
+                if (FileExists(&file_exists, filename) != 0) return KO;
+                if (file_exists) {
+                    size_t file_size;
+                    if (GetFileSize(&file_size, filename) != 0) return KO;
+                    file_writer->current_position = file_size;
+                } else {
+                    file_writer->current_position = 0ULL;
+                }
                 if (InitializeFileWriterWithAppendMode(file_writer.get()) != 0) return KO;
             }
             if (!GetState()->file_writers.insert({handle, std::move(file_writer)}).second) {
@@ -569,6 +575,7 @@ int driver_copyFromLocal(const char *sourcefilename, const char *destfilename) {
         ifstream ifs;
         size_t ntotalcopied = 0ULL, ntocopy, nread, nwritten, total_size;
 
+        file_writer.url = destfilename;
         if (InitializeFileWriterWithWriteMode(&file_writer) != 0) return -1;
         if (GetSystemPreferredBufferSize(&buffer_size) != 0) return -1;
         buffer = make_unique<char[]>(buffer_size);
@@ -624,7 +631,7 @@ int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceF
         if (!CheckNotNull(sDestFilePathName, STRINGIFY(sDestFilePathName), __func__)) return KO;
         if (!CheckNotNull(sSourceFilePathNames, STRINGIFY(sSourceFilePathNames), __func__)) return KO;
         if (nSourceFileCount < 2) { GetLogger()->error("Too few files to compose a multifile."); return KO; }
-        if (Concat(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) != 0) return KO;
+        if (ComposeMultifile(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) != 0) return KO;
         return kOtherSuccess;
     );
 }
