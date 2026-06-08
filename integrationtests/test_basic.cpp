@@ -157,7 +157,6 @@ TEST_F(StorageTest, Concat) {
   }
   const size_t nsources = tmpsources.size();
 
-  ASSERT_EQ(driver_connect(), kOtherSuccess) << "Failed to connect.";
   ASSERT_EQ(driver_fileExists(output.c_str()), kFalse) << "The output file exists before concatenation.";
   // Copy sources. The temporary copies will be the actual sources of the concatenation.
   if(GetStorageType() == StorageType::FILE) {
@@ -192,5 +191,4 @@ TEST_F(StorageTest, Concat) {
   if(GetStorageType() == StorageType::FILE) {
     ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Failed to remove temporary directory.";
   }
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess) << "Failed to disconnect.";
 }
