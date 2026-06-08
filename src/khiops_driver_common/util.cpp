@@ -1,22 +1,27 @@
 #include "khiops_driver_common/util.hpp"
-#include "khiops_driver_common/backend.hpp"
+#include "khiops_driver_common/globalstate.hpp"
+#include "khiops_driver_common/checks.hpp"
+#include "khiops_driver_common/stringify.hpp"
+#include <fstream>
+
+using namespace std;
 
 namespace khiops_driver_common {
 
-std::vector<std::string> Split(const std::string &str, char delim, long long int nMaxSplits, bool bRemoveEmpty) {
+vector<string> Split(const string &str, char delim, long long int nMaxSplits, bool bRemoveEmpty) {
     size_t nStrLen = str.length();
-    std::vector<std::string> fragments;
+    vector<string> fragments;
     size_t nOffset = 0;
     size_t nDelimPos;
-    std::string sFragment;
+    string sFragment;
     for (size_t nSplits = 0; nMaxSplits == -1 || nSplits <= static_cast<size_t>(nMaxSplits); nSplits++) {
         nDelimPos = nSplits == static_cast<size_t>(nMaxSplits)
-            ? std::string::npos
+            ? string::npos
             : str.find(delim, nOffset); sFragment = nOffset == nStrLen ? "" : str.substr(nOffset, nDelimPos - nOffset);
         if (!sFragment.empty() || !bRemoveEmpty) {
             fragments.push_back(std::move(sFragment));
         }
-        if (nDelimPos == std::string::npos) {
+        if (nDelimPos == string::npos) {
             break;
         }
         nOffset = nDelimPos + 1;
@@ -24,44 +29,44 @@ std::vector<std::string> Split(const std::string &str, char delim, long long int
     return fragments;
 }
 
-bool StartsWith(const std::string &str, const std::string &prefix) {
+bool StartsWith(const string &str, const string &prefix) {
     size_t strLen = str.length();
     size_t prefixLen = prefix.length();
     return prefixLen <= strLen && !str.compare(0, prefixLen, prefix);
 }
 
-bool EndsWith(const std::string &str, const std::string &suffix) {
+bool EndsWith(const string &str, const string &suffix) {
     size_t strLen = str.length();
     size_t suffixLen = suffix.length();
     return suffixLen <= strLen && !str.compare(strLen - suffixLen, suffixLen, suffix);
 }
 
-std::string ToLower(const std::string &str) {
-    std::string lower(str.length(), '\0');
-    std::transform(str.begin(), str.end(), lower.begin(), [](char ch) { return (char)tolower((int)ch); });
+string ToLower(const string &str) {
+    string lower(str.length(), '\0');
+    transform(str.begin(), str.end(), lower.begin(), [](char ch) { return (char)tolower((int)ch); });
     return lower;
 }
 
 bool RandomBool() {
-  static std::random_device randomDevice;
-  static std::minstd_rand::result_type seed =
+  static random_device randomDevice;
+  static minstd_rand::result_type seed =
       randomDevice() ^
-      ((std::minstd_rand::result_type)std::chrono::duration_cast<std::chrono::seconds>(
-           std::chrono::system_clock::now().time_since_epoch())
+      ((minstd_rand::result_type)chrono::duration_cast<chrono::seconds>(
+           chrono::system_clock::now().time_since_epoch())
            .count() +
-       (std::minstd_rand::result_type)std::chrono::duration_cast<std::chrono::microseconds>(
-           std::chrono::high_resolution_clock::now().time_since_epoch())
+       (minstd_rand::result_type)chrono::duration_cast<chrono::microseconds>(
+           chrono::high_resolution_clock::now().time_since_epoch())
            .count());
-  static std::minstd_rand generator(seed);
+  static minstd_rand generator(seed);
   return (bool)(generator() % 2 == 1);
 }
 
-std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging) {
+string GetEnvVar(const string &sVarName, bool bForbidLogging) {
     const char *value = getenv(sVarName.c_str());
     if (value) {
         if (strlen(value) > 0ULL) {
             if (!bForbidLogging) {
-                GetLogger()->debug("Environment variable {} is set to: {}.", sVarName, sVarName.find("CONNECTION_STRING") == std::string::npos ? value : "**REDACTED**");
+                GetLogger()->debug("Environment variable {} is set to: {}.", sVarName, sVarName.find("CONNECTION_STRING") == string::npos ? value : "**REDACTED**");
             }
             return value;
         } else if (!bForbidLogging) {
@@ -73,91 +78,78 @@ std::string GetEnvVar(const std::string &sVarName, bool bForbidLogging) {
     return "";
 }
 
-std::string GetEnvVarOrDefault(const std::string &sVarName, const std::string &sDefaultValue, bool bForbidLogging) {
-    std::string sEnvval = GetEnvVar(sVarName, bForbidLogging);
+string GetEnvVarOrDefault(const string &sVarName, const string &sDefaultValue, bool bForbidLogging) {
+    string sEnvval = GetEnvVar(sVarName, bForbidLogging);
     if (sEnvval.empty()) {
         return sDefaultValue;
     }
   return sEnvval;
 }
 
-size_t FindGlobbingChar(const std::string &str) {
-    std::smatch match;
-    return std::regex_search(str, match, std::regex("[^\\]([*?![^])", std::regex_constants::extended)) ? match.position(1) : std::string::npos;
+size_t FindGlobbingChar(const string &str) {
+    bool escaped = false;
+    for (size_t i = 0ULL; i < str.size(); i++) {
+        const char c = str[i];
+
+        if (escaped) {  // The current character has been previously escaped.
+            escaped = false;
+            continue;
+        }
+
+        if (c == '\\') {  // The next character, if any, will be escaped.
+            escaped = true;
+            continue;
+        }
+
+        if (c == '*' || c == '?' || c == '!' || c == '[' || c == '^') {  // Globbing character found!
+            return i;
+        }
+    }
+    return string::npos;  // Globbing character not found.
 }
 
-bool IsGlobbingPattern(const std::string &str) {
-    return FindGlobbingChar(str) != std::string::npos;
+bool IsGlobbingPattern(const string &str) {
+    return FindGlobbingChar(str) != string::npos;
 }
 
-int CheckIsNotGlobbingPattern(const std::string &str) {
+int CheckIsNotGlobbingPattern(const string &str) {
     if (IsGlobbingPattern(str)) {
         GetLogger()->error("Passed a globbing URL while a real URL was expected.");
         return -1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
-bool IsDirUrl(const std::string &url) {
+bool IsDirUrl(const string &url) {
     return url.size() > 0 && url.back() == '/';
 }
 
-int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count) {
-    const size_t ntotaltoread = size * count;
-    size_t nlefttoread = ntotaltoread, ntotalread = 0ULL, ntoread, nread;
-    size_t offset_inside_first_fragment_to_read, fragment_remote_offset;
-    size_t absolute_fragment_index, relative_fragment_index;
-    std::string globalread, read;
-    bool stopped_on_term_char;
-    
-    GetLogger()->debug("Reading starting position: {}  |  Total number of bytes to read: {}  |  Total file size: {}.", file_reader->current_position, ntotaltoread, file_reader->total_size);
-    
-    if (nlefttoread == 0ULL) {
-        GetLogger()->trace("0 byte to read => fast-exit.");
-        *result = 0ULL;
-        return 0;
-    }
+#if defined(__linux__)
+int FindCertificate(string *result) {
+    if (CheckNotNull(result, STRINGIFY(result), __func__)) return -1;
 
-    if (file_reader->current_position == file_reader->total_size) {
-        GetLogger()->error("Cannot read after end of file.");
-        return -1;
-    }
+    vector<string> file_candidates = {
+        "/etc/ssl/certs/ca-certificates.crt",                 // Debian/Ubuntu/Arch/Gentoo
+        "/etc/pki/tls/certs/ca-bundle.crt",                   // RHEL/CentOS/Rocky/AlmaLinux
+        "/etc/ssl/cert.pem",                                  // Alpine Linux (commonly used)
+        "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  // RHEL-family (alternative path)
+        "/etc/ssl/ca-bundle.pem"                              // SUSE/openSUSE (common path)
+    };
 
-    if (nlefttoread > file_reader->total_size - file_reader->current_position) {
-        GetLogger()->debug("Number of bytes to read exceeds number of remaining bytes to read from file => limiting to read rest of file.");
-        nlefttoread = file_reader->total_size - file_reader->current_position;
-    }
+    string ssl_cert_file = GetEnvVar("SSL_CERT_FILE");
+    if (!ssl_cert_file.empty()) file_candidates.push_back(ssl_cert_file);
 
-    if (FragmentIndexOfUserOffset(&absolute_fragment_index, *file_reader, file_reader->current_position) != 0) return -1;
-    GetLogger()->debug("Selected fragment #{} (0-based index) as the fragment to start reading from (file contains {} fragments).", absolute_fragment_index, file_reader->fragments.size());
-
-    for (relative_fragment_index = 0ULL; nlefttoread > 0ULL ; relative_fragment_index++, absolute_fragment_index++) {
-        const FileReader::Fragment &fragment = file_reader->fragments[absolute_fragment_index];
-        if (relative_fragment_index == 0ULL) {
-            offset_inside_first_fragment_to_read = file_reader->current_position - fragment.user_offset;
-            fragment_remote_offset = (absolute_fragment_index == 0ULL ? 0ULL : file_reader->header_length) + offset_inside_first_fragment_to_read;
-            ntoread = std::min(nlefttoread, fragment.content_size - offset_inside_first_fragment_to_read);
-        } else {
-            fragment_remote_offset = file_reader->header_length;
-            ntoread = std::min(nlefttoread, fragment.content_size);
+    for (const auto &path : file_candidates) {
+        ifstream f(path.c_str(), ios::in | ios::binary);
+        if (f.good()) {
+            *result = path;
+            return 0;
         }
-        if (ReadFragment(&read, &stopped_on_term_char, fragment.url, fragment.version.get(), fragment_remote_offset, ntoread) != 0) {
-            GetLogger()->error("Failed to read.");
-            return -1;
-        }
-        nread = read.size();
-        GetLogger()->trace("File fragment #{} (absolute #{}): read {} bytes.", relative_fragment_index, absolute_fragment_index, nread);
-        if (nread != ntoread) { GetLogger()->error("Number of bytes read does not match number of bytes to read."); return -1; }
-        ntotalread += nread;
-        globalread.append(read);
-        nlefttoread -= nread;
-        file_reader->current_position += nread;
     }
 
-    *result = ntotalread;
-    memcpy(ptr, globalread.data(), ntotalread);
-    return 0;
+    GetLogger()->error("Did not find SSL/TLS certificate.");
+    return -1;
 }
+#endif
 
 }

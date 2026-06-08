@@ -20,9 +20,6 @@ A collection of utilities.
 
 namespace khiops_driver_common {
 
-// A unique pointer to "void" with a custom deleter.
-using CustomVoidUniquePtr = std::unique_ptr<void, void (*)(void *)>;
-
 // Split string using a delimiter character.
 std::vector<std::string> Split(const std::string &str, char delim, long long int nMaxSplits = -1, bool bRemoveEmpty = false);
 // Check if string has a given prefix.
@@ -47,11 +44,12 @@ bool IsGlobbingPattern(const std::string &str);
 // Check that a string does not contain globbing characters.
 int CheckIsNotGlobbingPattern(const std::string &str);
 
-// Detect if a URL points to a directory.
+// Detect if a URL refers to a directory, that is, if it ends with a slash.
 bool IsDirUrl(const std::string &url);
 
-struct FileReader;
-// Read a given number of bytes from a file reader to a buffer.
-int FRead(size_t *result, void *ptr, FileReader *file_reader, size_t size, size_t count);
+#if defined(__linux__)
+// Find the path to the SSL/TLS certificate file.
+int FindCertificate(std::string *result);
+#endif
 
 } // namespace khiops_driver_common

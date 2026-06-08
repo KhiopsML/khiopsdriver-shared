@@ -1,5 +1,4 @@
 #include "khiops_driver_common/util.hpp"
-#include "khiops_driver_common/backend.hpp"
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <sstream>
@@ -9,17 +8,12 @@
 
 using namespace std;
 
-
 /*** String stream logger for driver_getlasterror ***/
 static ostringstream logstringstream;
 static shared_ptr<spdlog::sinks::ostream_sink_st> stringstreamsink;
 
 /*** File logger used if the logfile is set using the driver-specific environment variable and is not an empty string, and if the loglevel is set using the driver-specific environment variable and is not "off" ***/
 static shared_ptr<spdlog::sinks::basic_file_sink_st> filesink;
-
-/*** The logger that is meant to be used ***/
-static shared_ptr<spdlog::logger> logger;
-
 
 namespace khiops_driver_common {
 

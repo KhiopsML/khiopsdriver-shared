@@ -1,14 +1,16 @@
 set(KhiopsDriverCommonSources
-    backend.hpp
+    checks.hpp
+    checks.cpp
     contrib.hpp
     driver.h
-    driver.cpp
-    filestream.hpp
-    filestream.cpp
+    filestream_management.hpp
+    globalstate.hpp
     logging.hpp
     logging.cpp
     returnval.hpp
     stringify.hpp
+    userfunc_checks.hpp
+    userfunc_checks.cpp
     util.hpp
     util.cpp
 )
