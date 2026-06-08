@@ -314,7 +314,7 @@ void *driver_fopen(const char *filename, char mode) {
                 size_t file_size;
                 if (GetFileSize(&file_size, filename) != 0) return KO;
                 file_writer->current_position = file_size;
-                if (InitializeFileWriteWithAppendMode(file_writer.get()) != 0) return KO;
+                if (InitializeFileWriterWithAppendMode(file_writer.get()) != 0) return KO;
             }
             if (!GetState()->file_writers.insert({handle, std::move(file_writer)}).second) {
                 GetLogger()->error("Failed to register file stream.");

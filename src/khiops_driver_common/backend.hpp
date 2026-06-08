@@ -15,7 +15,7 @@ spdlog::logger *GetLogger();
 void FreeFileReaderFragmentVersion(void *version);
 void FreeFileWriterUserData(void *user_data);
 int InitializeFileWriterWithWriteMode(FileWriter *file_writer);
-int InitializeFileWriteWithAppendMode(FileWriter *file_writer);
+int InitializeFileWriterWithAppendMode(FileWriter *file_writer);
 int ListFragments(std::vector<std::string> *result, const std::string &url);
 int GetFragmentSizeAndVersion(size_t *size_result, void **version_result, const std::string &url);
 int ReadFragment(std::string *result, bool *stopped_on_termchar, const std::string &url, void *version, size_t offset, size_t maxlength);
