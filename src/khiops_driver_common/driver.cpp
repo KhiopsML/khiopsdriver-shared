@@ -608,12 +608,16 @@ int driver_concat(const char *destfilename, const char **sourcefilenames, size_t
     const int KO = kOtherFailure;
     CATCH_ALL(
         GetLogger()->info("Concatenating {} files to URL {}...", sourcefilecount, destfilename);
-        for (size_t i = 0; i < sourcefilecount; i++) {
+        for (size_t i = 0ULL; i < sourcefilecount; i++) {
             GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
         }
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(destfilename, STRINGIFY(destfilename), __func__)) return KO;
         if (!CheckNotNull(sourcefilenames, STRINGIFY(sourcefilenames), __func__)) return KO;
+        if (!CheckIsFileUrl(destfilename)) return -1;
+        for (size_t i = 0ULL; i < sourcefilecount; i++) {
+            if (!CheckIsFileUrl(sourcefilenames[i])) return -1;
+        }
         if (sourcefilecount < 2) { GetLogger()->error("Too few files to concatenate."); return KO; }
         if (Concat(destfilename, vector<string>(sourcefilenames, sourcefilenames + sourcefilecount)) != 0) return KO;
         return kOtherSuccess;
@@ -630,6 +634,10 @@ int driver_composeMultifile(const char *sDestFilePathName, const char **sSourceF
         if (!CheckInitialized()) return KO;
         if (!CheckNotNull(sDestFilePathName, STRINGIFY(sDestFilePathName), __func__)) return KO;
         if (!CheckNotNull(sSourceFilePathNames, STRINGIFY(sSourceFilePathNames), __func__)) return KO;
+        if (!CheckIsFileUrl(sDestFilePathName)) return -1;
+        for (size_t i = 0ULL; i < nSourceFileCount; i++) {
+            if (!CheckIsFileUrl(sSourceFilePathNames[i])) return -1;
+        }
         if (nSourceFileCount < 2) { GetLogger()->error("Too few files to compose a multifile."); return KO; }
         if (ComposeMultifile(sDestFilePathName, vector<string>(sSourceFilePathNames, sSourceFilePathNames + nSourceFileCount)) != 0) return KO;
         return kOtherSuccess;
