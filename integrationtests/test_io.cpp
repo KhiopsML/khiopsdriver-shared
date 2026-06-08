@@ -144,7 +144,7 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
 
   // Write initial data to the file
   ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'w'), nullptr);
-  ASSERT_EQ(driver_fwrite("abcdef", 1, 6, ohandle), 3);
+  ASSERT_EQ(driver_fwrite("abcdef", 1, 6, ohandle), 6);
   ASSERT_EQ(driver_fflush(ohandle), kSuccess);
   // FIXME: should we test reading from a file that is still open for writing?
   //        It is currently not possible because all drivers do not behave the same, 
@@ -180,7 +180,7 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
   ASSERT_NE(ihandle = driver_fopen(file.c_str(), 'r'), nullptr);
   // Now read the content again. It should be the new one
-  ASSERT_EQ(driver_fread(ibuffer, 1, 20, ihandle), 6);
+  ASSERT_EQ(driver_fread(ibuffer, 1, 20, ihandle), 9);
   ASSERT_STREQ(ibuffer, "abcdefghi");
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
