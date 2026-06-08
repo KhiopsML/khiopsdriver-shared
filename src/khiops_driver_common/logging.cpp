@@ -36,9 +36,9 @@ spdlog::logger *GetLogger(const std::string &logger_name, const string &logfile_
     sinks.push_back(stringstreamsink);
 
     /*** Create the file logger if configured and add it to the vector of sinks. ***/
-    string logfile = khiops_driver_common::util::env::GetEnvVar(logfile_envvar_name, true);
+    string logfile = GetEnvVar(logfile_envvar_name, true);
     if (!logfile.empty()) {
-      spdlog::level::level_enum loglevel = spdlog::level::from_str(khiops_driver_common::util::env::GetEnvVarOrDefault(loglevel_envvar_name, "off", true));
+      spdlog::level::level_enum loglevel = spdlog::level::from_str(GetEnvVarOrDefault(loglevel_envvar_name, "off", true));
       filesink = make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
       filesink->set_level(loglevel);
       sinks.push_back(filesink);

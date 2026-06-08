@@ -72,7 +72,7 @@ int PopulateFileReader(FileReader *file_reader, const string &url) {
             bool should_read_header = false;
             if (fragment_index < NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END || total_number_of_fragments <= fragment_index + NUMBER_OF_FRAGMENTS_TO_PICK_AT_EACH_END) {
                 should_read_header = true;
-            } else if (number_of_fragments_picked_randomly < MAX_NUMBER_OF_FRAGMENTS_TO_PICK_RANDOMLY && util::random::RandomBool()) {
+            } else if (number_of_fragments_picked_randomly < MAX_NUMBER_OF_FRAGMENTS_TO_PICK_RANDOMLY && RandomBool()) {
                 should_read_header = true;
                 number_of_fragments_picked_randomly++;
             }
