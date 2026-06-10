@@ -12,6 +12,7 @@ A collection of utilities.
 #include <cstring>
 #include <memory>
 #include <random>
+#include <sys/stat.h>
 #include <regex>
 #include <string>
 #include <vector>
@@ -137,6 +138,32 @@ inline size_t FindGlobbingChar(const std::string &str) {
 }
 
 } // namespace glob
+
+int FindCertificate(std::string *result) {
+  if (result == nullptr) {
+    khiops_driver_common::logging::getLogger()->error("Null pointer pass to function {}", __func__);
+    return -1;
+  }
+
+  const std::vector<std::string> file_candidates = {
+      "/etc/ssl/certs/ca-certificates.crt",                 // Debian/Ubuntu/Arch/Gentoo
+      "/etc/pki/tls/certs/ca-bundle.crt",                   // RHEL/CentOS/Rocky/AlmaLinux
+      "/etc/ssl/cert.pem",                                  // Alpine Linux (commonly used)
+      "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  // RHEL-family (alternative path)
+      "/etc/ssl/ca-bundle.pem"                              // SUSE/openSUSE (common path)
+  };
+
+  for (const auto &path : file_candidates) {
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+      *result = path;
+      return 0;
+    }
+  }
+
+  result->clear();
+  return 0;
+}
 
 } // namespace util
 } // namespace khiops_driver_common
