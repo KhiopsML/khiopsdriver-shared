@@ -139,7 +139,7 @@ inline size_t FindGlobbingChar(const std::string &str) {
 
 } // namespace glob
 
-inline int FindCertificate(std::string *result) {
+int FindCertificate(std::string *result) {
   if (result == nullptr) {
     khiops_driver_common::logging::getLogger()->error("Null pointer pass to function {}", __func__);
     return -1;
@@ -154,8 +154,8 @@ inline int FindCertificate(std::string *result) {
   };
 
   for (const auto &path : file_candidates) {
-    struct stat st;
-    if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+    std::ifstream f(path.c_str(), std::ios::in | std::ios::binary);
+    if (f.good()) {
       *result = path;
       return 0;
     }
