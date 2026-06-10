@@ -139,7 +139,7 @@ inline size_t FindGlobbingChar(const std::string &str) {
 
 } // namespace glob
 
-int FindCertificate(std::string *result) {
+inline int FindCertificate(std::string *result) {
   if (result == nullptr) {
     khiops_driver_common::logging::getLogger()->error("Null pointer pass to function {}", __func__);
     return -1;
