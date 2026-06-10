@@ -12,8 +12,8 @@ A collection of utilities.
 #include <cstring>
 #include <memory>
 #include <random>
-#include <sys/stat.h>
 #include <regex>
+#include <fstream>
 #include <string>
 #include <vector>
 #include "khiops_driver_common/logging.hpp"
