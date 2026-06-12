@@ -139,6 +139,7 @@ inline size_t FindGlobbingChar(const std::string &str) {
 
 } // namespace glob
 
+#if defined(__linux__)
 inline int FindCertificate(std::string *result) {
   if (result == nullptr) {
     khiops_driver_common::logging::getLogger()->error("Null pointer pass to function {}", __func__);
@@ -161,9 +162,10 @@ inline int FindCertificate(std::string *result) {
     }
   }
 
-  result->clear();
-  return 0;
+  khiops_driver_common::logging::getLogger()->error("Did not find SSL/TLS certificate.");
+  return -1;
 }
+#endif
 
 } // namespace util
 } // namespace khiops_driver_common
