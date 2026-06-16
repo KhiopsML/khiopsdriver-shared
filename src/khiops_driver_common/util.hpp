@@ -146,13 +146,16 @@ inline int FindCertificate(std::string *result) {
     return -1;
   }
 
-  const std::vector<std::string> file_candidates = {
+  std::vector<std::string> file_candidates = std::vector<std::string> {
       "/etc/ssl/certs/ca-certificates.crt",                 // Debian/Ubuntu/Arch/Gentoo
       "/etc/pki/tls/certs/ca-bundle.crt",                   // RHEL/CentOS/Rocky/AlmaLinux
       "/etc/ssl/cert.pem",                                  // Alpine Linux (commonly used)
       "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  // RHEL-family (alternative path)
       "/etc/ssl/ca-bundle.pem"                              // SUSE/openSUSE (common path)
   };
+
+  std::string ssl_cert_file = khiops_driver_common::util::env::GetEnvVar("SSL_CERT_FILE");
+  if (!ssl_cert_file.empty()) file_candidates.push_back(ssl_cert_file);
 
   for (const auto &path : file_candidates) {
     std::ifstream f(path.c_str(), std::ios::in | std::ios::binary);
