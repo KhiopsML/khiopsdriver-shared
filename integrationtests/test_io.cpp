@@ -1,4 +1,4 @@
-#include "plugin.hpp"
+#include "khiops_driver_common/driver.h"
 #include "fixture_storage.hpp"
 #include "returnval.hpp"
 
@@ -30,8 +30,7 @@ TEST_F(IoTest, FSeekMultipartFile) { TestFSeek(url.MultisplitFile(), true); }
 
 void TestFSeek(string sUrl, bool bCrLf) {
   void *handle;
-  char *buffer = new char[32];
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
+  char buffer[32];
   ASSERT_NE(handle = driver_fopen(sUrl.c_str(), 'r'), nullptr);
 
   ASSERT_EQ(driver_fseek(handle, bCrLf ? 929 : 922, 0), kSuccess);
@@ -50,16 +49,12 @@ void TestFSeek(string sUrl, bool bCrLf) {
   ASSERT_STREQ(buffer, "Never-married");
 
   ASSERT_EQ(driver_fclose(handle), kSuccess);
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
-  delete[] buffer;
 }
 
 TEST_F(IoTest, FReadAtEndOfFile) {
   char ibuffer[64];
   void *ihandle;
   long long int filesize;
-
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
 
   // We want the file to be at least 10-byte long
   ASSERT_GT(filesize = driver_getFileSize(url.File().c_str()), 10);
@@ -81,24 +76,20 @@ TEST_F(IoTest, FReadAtEndOfFile) {
   ibuffer[2] = 0;
   ASSERT_STREQ(ibuffer, "e\n");
   // Trying to read four bytes while we are already at the end of the file...
-  // should raise an error
+  // it should raise an error
   ASSERT_EQ(driver_fread(ibuffer, 1, 4, ihandle), kFailure);
   ASSERT_THAT(driver_getlasterror(),
               testing::HasSubstr("Cannot read after end of file."));
   ASSERT_STREQ(ibuffer, "e\n"); // Buffer content unchanged
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
-
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
 }
 
-TEST_F(IoTest, FReadWithConcurrentWrite) {
+TEST_F(IoTest, FReadAtEndOfFileWithConcurrentWrite) {
   string file = url.RandomOutputFile();
   char ibuffer[64]{};
   void *ihandle;
   void *ohandle;
-
-  ASSERT_EQ(driver_connect(), kOtherSuccess);
 
   // Write initial data to the file
   ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'w'), nullptr);
@@ -119,16 +110,67 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_STREQ(ibuffer, "abc");
 
   // Add some data to the file. The ETag of the file will be changed
-  // As in FIXME above, we have to reopen in append mode for drivers that do not 
+  // As in FIXME above, we have to reopen in append mode for drivers that do not
   // create the file upon fflush, forcing us to fclose.
   ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'a'), nullptr);
   ASSERT_EQ(driver_fwrite("def", 1, 3, ohandle), 3);
   ASSERT_EQ(driver_fflush(ohandle), kSuccess);
   ASSERT_EQ(driver_fclose(ohandle), kSuccess);
 
+  // This second reading operation should fail because we are at already at end of file.
+  // This error case has priority above the "file modified" error case because the user could know they were at end of file, using driver_getFileSize.
+  ASSERT_EQ(driver_fread(ibuffer, 1, 6, ihandle), kFailure);
+  ASSERT_THAT(
+      driver_getlasterror(),
+      testing::HasSubstr("Cannot read after end of file."));
+  ASSERT_STREQ(ibuffer, "abc"); // Input buffer content unchanged
+
+  // Open file again. This will fetch the new ETag
+  ASSERT_EQ(driver_fclose(ihandle), kSuccess);
+  ASSERT_NE(ihandle = driver_fopen(file.c_str(), 'r'), nullptr);
+  // Now read the content again. It should be the new one
+  ASSERT_EQ(driver_fread(ibuffer, 1, 20, ihandle), 6);
+  ASSERT_STREQ(ibuffer, "abcdef");
+
+  ASSERT_EQ(driver_fclose(ihandle), kSuccess);
+  ASSERT_EQ(driver_remove(file.c_str()), kOtherSuccess);
+}
+
+TEST_F(IoTest, FReadWithConcurrentWrite) {
+  string file = url.RandomOutputFile();
+  char ibuffer[64]{};
+  void *ihandle;
+  void *ohandle;
+
+  // Write initial data to the file
+  ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'w'), nullptr);
+  ASSERT_EQ(driver_fwrite("abcdef", 1, 6, ohandle), 6);
+  ASSERT_EQ(driver_fflush(ohandle), kSuccess);
+  // FIXME: should we test reading from a file that is still open for writing?
+  //        It is currently not possible because all drivers do not behave the same, 
+  //        (not all drivers actually write upon fflush, some only write upon fclose)
+  //        but it could be a useful feature to add in the future. 
+  //        For now we close the file after writing to be able to read from it.
+  ASSERT_EQ(driver_fclose(ohandle), kSuccess);
+
+  // Open the file for reading. Internally this will fetch the ETag of the file
+  ASSERT_NE(ihandle = driver_fopen(file.c_str(), 'r'), nullptr);
+  // This first reading operation should find an ETag identical to the one
+  // fetched previously
+  ASSERT_EQ(driver_fread(ibuffer, 1, 3, ihandle), 3);
+  ASSERT_STREQ(ibuffer, "abc");
+
+  // Add some data to the file. The ETag of the file will be changed
+  // As in FIXME above, we have to reopen in append mode for drivers that do not 
+  // create the file upon fflush, forcing us to fclose.
+  ASSERT_NE(ohandle = driver_fopen(file.c_str(), 'a'), nullptr);
+  ASSERT_EQ(driver_fwrite("ghi", 1, 3, ohandle), 3);
+  ASSERT_EQ(driver_fflush(ohandle), kSuccess);
+  ASSERT_EQ(driver_fclose(ohandle), kSuccess);
+
   // This second reading operation should fail because it should find an ETag
   // different to the one fetched by the driver_fopen call
-  ASSERT_EQ(driver_fread(ibuffer, 1, 6, ihandle), kFailure);
+  ASSERT_EQ(driver_fread(ibuffer, 1, 3, ihandle), kFailure);
   ASSERT_THAT(
       driver_getlasterror(),
       testing::HasSubstr("The file has been updated while reading it."));
@@ -138,11 +180,9 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
   ASSERT_NE(ihandle = driver_fopen(file.c_str(), 'r'), nullptr);
   // Now read the content again. It should be the new one
-  ASSERT_EQ(driver_fread(ibuffer, 1, 6, ihandle), 6);
-  ASSERT_STREQ(ibuffer, "abcdef");
+  ASSERT_EQ(driver_fread(ibuffer, 1, 20, ihandle), 9);
+  ASSERT_STREQ(ibuffer, "abcdefghi");
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
   ASSERT_EQ(driver_remove(file.c_str()), kOtherSuccess);
-
-  ASSERT_EQ(driver_disconnect(), kOtherSuccess);
 }

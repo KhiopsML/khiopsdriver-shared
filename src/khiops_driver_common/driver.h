@@ -1,11 +1,5 @@
 #pragma once
 
-// Release versions must have 3 digits, for example KHIOPS_STR(1.2.0)
-// Alpha, beta ou release candidate have an extra suffix, for example :
-// - KHIOPS_STR(1.2.0-a.1)
-// - KHIOPS_STR(1.2.0-b.3)
-// - KHIOPS_STR(1.2.0-rc.2)
-
 #include <cstdlib>
 #include <sys/types.h>
 
@@ -22,7 +16,11 @@
 #define VISIBLE __attribute__((visibility("default")))
 #else
 /* Windows Visual C++ only */
+#ifdef CLOUD_STORAGE_DRIVER_EXPORT
 #define VISIBLE __declspec(dllexport)
+#else
+#define VISIBLE __declspec(dllimport)
+#endif
 #endif
 
 /* Use of C linkage from C++ */
@@ -71,6 +69,10 @@ VISIBLE long long int driver_getSystemPreferredBufferSize();
 ///////////////////////////////////////////////////////////////////////////////////
 // The following read-only functions are mandatory and they need to be
 // implemented
+
+// Returns 1 if the file exists, 0 otherwise
+// DEPRECATED see driver_FileExists and driver_DirExists
+VISIBLE int driver_exist(const char *filename);
 
 // Returns 1 if the file exists, 0 otherwise
 VISIBLE int driver_fileExists(const char *sFilePathName);
@@ -150,10 +152,24 @@ VISIBLE int driver_copyFromLocal(const char *sourcefilename,
                                  const char *destfilename);
 
 // Concatenates all sourcefilecount files specified in sourcefilenames to a new
-// file destfilename The concatenation is done on the storage server side The
-// source files are not deleted Returns 1 on success, 0 on error
+// file destfilename. Sourcefilenames must be objects from the same
+// bucket as the destfilename.
+// The concatenation is done on the storage server side.
+// The source files are not deleted Returns 1 on success, 0 on error.
 VISIBLE int driver_concat(const char *destfilename,
                           const char **sourcefilenames, size_t sourcefilecount);
+
+// Renames multiple files to follow a globbing pattern with sequence numbers
+//   sDestFilePathName is a globbing pattern in format 'prefix*suffix' where:
+//   - prefix must contain bucket name (gs://bucket/path)
+//   - prefix must not end with a digit
+//   - suffix is optional and must not start with a digit
+//   sSourceFilePathNames is an array of relative file paths (no gs:// allowed)
+//   nSourceFileCount is the number of source files
+// returns kOtherSuccess on success, kOtherFailure on error
+VISIBLE int driver_composeMultifile(const char *sDestFilePathName,
+                                    const char **sSourceFilePathNames,
+                                    size_t nSourceFileCount);
 
 #ifdef __cplusplus
 } /* extern "C" */

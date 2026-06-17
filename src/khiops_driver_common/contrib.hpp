@@ -5,8 +5,6 @@
 #include <string>
 
 namespace khiops_driver_common {
-namespace util {
-namespace glob {
 
 // File:        From orginal match.cpp
 // Author:      Robert A. van Engelen, engelen@genivia.com
@@ -168,6 +166,4 @@ inline bool GitignoreGlobMatch(const std::string &text,
   return j >= m;
 }
 
-} // namespace glob
-} // namespace util
 } // namespace khiops_driver_common

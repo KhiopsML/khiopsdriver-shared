@@ -30,7 +30,10 @@ add_executable(
   fixture_storage.hpp
   returnval.hpp
   utils.hpp
-  urls.hpp)
+  urls.hpp
+  ../src/khiops_driver_common/driver.h)
+
+target_include_directories(basic_test PRIVATE src ../src)
 
 target_compile_options(
   basic_test

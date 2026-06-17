@@ -1,6 +1,6 @@
 #pragma once
 
-#include "plugin.hpp"
+#include "khiops_driver_common/driver.h"
 #include "returnval.hpp"
 #include <gtest/gtest.h>
 #include <string>

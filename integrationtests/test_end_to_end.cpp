@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "plugin.hpp"
+#include "khiops_driver_common/driver.h"
 #include "fixture_storage.hpp"
 #include "returnval.hpp"
 
