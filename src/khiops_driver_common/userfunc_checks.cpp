@@ -1,6 +1,7 @@
 #include "khiops_driver_common/userfunc_checks.hpp"
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <limits>
 #include <vector>
 #include "khiops_driver_common/logging.hpp"
@@ -214,6 +215,12 @@ int Check_driver_concat(const char *destfilename, const char **sourcefilenames, 
     if (CheckInitialized()) return -1;
     if (CheckNotNull(destfilename, STRINGIFY(destfilename), "driver_concat")) return -1;
     if (CheckNotNull(sourcefilenames, STRINGIFY(sourcefilenames), "driver_concat")) return -1;
+    for (size_t i = 0ULL; i < sourcefilecount; i++) {
+        ostringstream oss;
+        oss << STRINGIFY(sourcefilenames) << "[" << i << "]";
+        string str = oss.str();
+        if (CheckNotNull(sourcefilenames[i], str.c_str(), "driver_concat")) return -1;
+    }
     for (size_t i = 0ULL; i < sourcefilecount; i++) {
         GetLogger()->info("  Source file #{}: {}", i + 1, sourcefilenames[i]);
     }
