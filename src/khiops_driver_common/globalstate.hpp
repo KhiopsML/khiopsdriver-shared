@@ -18,7 +18,7 @@ struct State {
 inline State *GetState() {
     static std::unique_ptr<State> state = nullptr;
     if (!state) {
-        state = std::make_unique<State>();
+        state = std::unique_ptr<State>(new State());
         state->is_driver_initialized = false;
     }
     return state.get();
