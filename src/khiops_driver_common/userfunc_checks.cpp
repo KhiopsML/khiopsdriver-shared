@@ -36,13 +36,11 @@ int Check_driver_isReadOnly() {
 
 int Check_driver_connect() {
     GetLogger()->info("Connecting...");
-    if (CheckNotInitialized()) return -1;
     return 0;
 }
 
 int Check_driver_disconnect() {
     GetLogger()->info("Disconnecting...");
-    if (CheckInitialized()) return -1;
     return 0;
 }
 
