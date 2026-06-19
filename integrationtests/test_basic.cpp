@@ -192,3 +192,113 @@ TEST_F(StorageTest, Concat) {
     ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Failed to remove temporary directory.";
   }
 }
+
+TEST_F(StorageTest, ComposeMultifile) {
+  // Reference sources already available in the test environment
+  const std::vector<std::string> original_sources = url.SplitFileParts();
+  const size_t nsources = original_sources.size();
+  ASSERT_GT(nsources, 0ULL) << "No source files available for composeMultifile test.";
+
+  // Temporary directory for copied sources, then renamed outputs
+  const std::string tmpdir = url.NewRandomDir();
+
+  // Destination globbing pattern: prefix*suffix
+  const std::string dest_pattern = tmpdir + "compose-renamed-*.txt";
+
+  // Temporary source full paths (used by CopyFile / fileExists)
+  std::vector<std::string> tmpsources_full;
+  tmpsources_full.reserve(nsources);
+
+  // Relative source paths (without scheme), required by driver_composeMultifile
+  std::vector<std::string> tmpsources_relative;
+  tmpsources_relative.reserve(nsources);
+
+  // C-string array passed to the driver
+  std::vector<const char *> tmpsources_relative_cstr;
+  tmpsources_relative_cstr.reserve(nsources);
+
+  if(GetStorageType() == StorageType::FILE) {
+    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Temporary directory already exists.";
+  }
+  ASSERT_EQ(driver_mkdir(tmpdir.c_str()), kOtherSuccess) << "Could not create temporary directory.";
+
+  // Build temporary copies of source files
+  for(size_t i = 0ULL; i < nsources; ++i) {
+    std::ostringstream name;
+    name << tmpdir << "compose-src-" << std::setfill('0') << std::setw(3) << i << ".txt";
+    const std::string tmpsource = name.str();
+
+    CopyFile(original_sources[i], tmpsource);
+    tmpsources_full.push_back(tmpsource);
+
+    // Convert to relative path for composeMultifile
+    // Same assumption as in existing Concat/tests:
+    // URL format is ".../<object_path>".
+    const std::size_t pos = tmpsource.find("://");
+    std::string relative_path;
+    if(pos != std::string::npos) {
+      const std::size_t first_slash_after_scheme = tmpsource.find('/', pos + 3);
+      ASSERT_NE(first_slash_after_scheme, std::string::npos)
+          << "Invalid storage URL format for source: " << tmpsource;
+      const std::size_t second_slash = tmpsource.find('/', first_slash_after_scheme + 1);
+      ASSERT_NE(second_slash, std::string::npos)
+          << "Cannot extract relative object path from: " << tmpsource;
+      relative_path = tmpsource.substr(second_slash + 1);
+    } else {
+      // Local/file driver case: path is already relative/compatible
+      relative_path = tmpsource;
+    }
+
+    tmpsources_relative.push_back(relative_path);
+  }
+
+  for(size_t i = 0ULL; i < tmpsources_relative.size(); ++i) {
+    tmpsources_relative_cstr.push_back(tmpsources_relative[i].c_str());
+  }
+
+  // Execute
+  ASSERT_EQ(driver_composeMultifile(dest_pattern.c_str(),
+                                    tmpsources_relative_cstr.data(),
+                                    nsources),
+            kOtherSuccess) << "ComposeMultifile failed.";
+
+  // Verify source deletion
+  for(size_t i = 0ULL; i < tmpsources_full.size(); ++i) {
+    ASSERT_EQ(driver_fileExists(tmpsources_full[i].c_str()), kFalse)
+        << "Source file was not deleted after composeMultifile: " << tmpsources_full[i];
+  }
+
+  // Verify renamed output presence
+  // Expected format: prefix + 12 digits + suffix
+  std::vector<std::string> renamed_outputs;
+  renamed_outputs.reserve(nsources);
+
+  const std::string prefix = tmpdir + "compose-renamed-";
+  const std::string suffix = ".txt";
+
+  for(size_t i = 0ULL; i < nsources; ++i) {
+    std::ostringstream out;
+    out << prefix << std::setfill('0') << std::setw(12) << i << suffix;
+    renamed_outputs.push_back(out.str());
+  }
+
+  for(size_t i = 0ULL; i < renamed_outputs.size(); ++i) {
+    ASSERT_EQ(driver_fileExists(renamed_outputs[i].c_str()), kTrue)
+        << "Renamed output does not exist: " << renamed_outputs[i];
+    ASSERT_GT(driver_getFileSize(renamed_outputs[i].c_str()), 0)
+        << "Renamed output is empty or unreadable: " << renamed_outputs[i];
+  }
+
+  // Cleanup
+  for(size_t i = 0ULL; i < renamed_outputs.size(); ++i) {
+    ASSERT_EQ(driver_remove(renamed_outputs[i].c_str()), kOtherSuccess)
+        << "Failed to remove renamed output: " << renamed_outputs[i];
+    ASSERT_EQ(driver_fileExists(renamed_outputs[i].c_str()), kFalse)
+        << "Renamed output still exists after cleanup: " << renamed_outputs[i];
+  }
+
+  ASSERT_EQ(driver_rmdir(tmpdir.c_str()), kOtherSuccess) << "Could not delete temporary directory.";
+  if(GetStorageType() == StorageType::FILE) {
+    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Temporary directory still exists after cleanup.";
+  }
+}
