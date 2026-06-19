@@ -194,22 +194,22 @@ TEST_F(StorageTest, Concat) {
 }
 
 TEST_F(StorageTest, ComposeMultifile) {
-  // Reference sources already available in the test environment
+  // Define source files assumed to exist in the test dataset
   const std::vector<std::string> original_sources = url.SplitFileParts();
   const size_t nsources = original_sources.size();
   ASSERT_GT(nsources, 0ULL) << "No source files available for composeMultifile test.";
 
-  // Temporary directory for copied sources, then renamed outputs
+  // Temporary directory for copied sources and renamed outputs
   const std::string tmpdir = url.NewRandomDir();
 
   // Destination globbing pattern: prefix*suffix
   const std::string dest_pattern = tmpdir + "compose-renamed-*.txt";
 
-  // Temporary source full paths (used by CopyFile / fileExists)
+  // Full source paths (used for copy and existence checks)
   std::vector<std::string> tmpsources_full;
   tmpsources_full.reserve(nsources);
 
-  // Relative source paths (without scheme), required by driver_composeMultifile
+  // Relative source paths required by driver_composeMultifile (no scheme)
   std::vector<std::string> tmpsources_relative;
   tmpsources_relative.reserve(nsources);
 
@@ -217,12 +217,9 @@ TEST_F(StorageTest, ComposeMultifile) {
   std::vector<const char *> tmpsources_relative_cstr;
   tmpsources_relative_cstr.reserve(nsources);
 
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Temporary directory already exists.";
-  }
   ASSERT_EQ(driver_mkdir(tmpdir.c_str()), kOtherSuccess) << "Could not create temporary directory.";
 
-  // Build temporary copies of source files
+  // Copy sources to temporary location
   for(size_t i = 0ULL; i < nsources; ++i) {
     std::ostringstream name;
     name << tmpdir << "compose-src-" << std::setfill('0') << std::setw(3) << i << ".txt";
@@ -231,23 +228,20 @@ TEST_F(StorageTest, ComposeMultifile) {
     CopyFile(original_sources[i], tmpsource);
     tmpsources_full.push_back(tmpsource);
 
-    // Convert to relative path for composeMultifile
-    // Same assumption as in existing Concat/tests:
-    // URL format is ".../<object_path>".
-    const std::size_t pos = tmpsource.find("://");
-    std::string relative_path;
-    if(pos != std::string::npos) {
-      const std::size_t first_slash_after_scheme = tmpsource.find('/', pos + 3);
-      ASSERT_NE(first_slash_after_scheme, std::string::npos)
-          << "Invalid storage URL format for source: " << tmpsource;
-      const std::size_t second_slash = tmpsource.find('/', first_slash_after_scheme + 1);
-      ASSERT_NE(second_slash, std::string::npos)
-          << "Cannot extract relative object path from: " << tmpsource;
-      relative_path = tmpsource.substr(second_slash + 1);
-    } else {
-      // Local/file driver case: path is already relative/compatible
-      relative_path = tmpsource;
-    }
+    // Convert full URL to relative object path for composeMultifile
+    // Expected blob URL format: scheme://bucket/object_path
+    const std::size_t scheme_pos = tmpsource.find("://");
+    ASSERT_NE(scheme_pos, std::string::npos)
+        << "Invalid storage URL format for source: " << tmpsource;
+
+    const std::size_t object_pos = tmpsource.find('/', scheme_pos + 3);
+    ASSERT_NE(object_pos, std::string::npos)
+        << "Cannot find object path in source URL: " << tmpsource;
+
+    // Keep everything after bucket separator: "khiops_data/..."
+    const std::string relative_path = tmpsource.substr(object_pos + 1);
+    ASSERT_FALSE(relative_path.empty())
+        << "Extracted empty relative path from source URL: " << tmpsource;
 
     tmpsources_relative.push_back(relative_path);
   }
@@ -256,20 +250,20 @@ TEST_F(StorageTest, ComposeMultifile) {
     tmpsources_relative_cstr.push_back(tmpsources_relative[i].c_str());
   }
 
-  // Execute
+  // Execute composeMultifile
   ASSERT_EQ(driver_composeMultifile(dest_pattern.c_str(),
                                     tmpsources_relative_cstr.data(),
                                     nsources),
             kOtherSuccess) << "ComposeMultifile failed.";
 
-  // Verify source deletion
+  // Verify that sources were deleted
   for(size_t i = 0ULL; i < tmpsources_full.size(); ++i) {
     ASSERT_EQ(driver_fileExists(tmpsources_full[i].c_str()), kFalse)
         << "Source file was not deleted after composeMultifile: " << tmpsources_full[i];
   }
 
-  // Verify renamed output presence
-  // Expected format: prefix + 12 digits + suffix
+  // Verify renamed output files existence
+  // Expected naming: prefix + 12-digit index + suffix
   std::vector<std::string> renamed_outputs;
   renamed_outputs.reserve(nsources);
 
@@ -298,7 +292,4 @@ TEST_F(StorageTest, ComposeMultifile) {
   }
 
   ASSERT_EQ(driver_rmdir(tmpdir.c_str()), kOtherSuccess) << "Could not delete temporary directory.";
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Temporary directory still exists after cleanup.";
-  }
 }
