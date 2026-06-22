@@ -100,5 +100,15 @@ public:
         << boost::uuids::random_generator()() << ".txt";
     return oss.str();
   }
+
+  const std::string RandomLocalFile() const {
+    std::ostringstream oss;
+#ifdef _WIN32
+    oss << std::getenv("TEMP") << "\\out-" << boost::uuids::random_generator()() << ".txt";
+#else
+    oss << "/tmp/out-" << boost::uuids::random_generator()() << ".txt";
+#endif
+    return oss.str();
+  } 
 };
 }

@@ -1,0 +1,91 @@
+#include <string>
+#include <vector>
+#include <cstdio>
+#include <gtest/gtest.h>
+#include "../fixture_storage.hpp"
+#include "khiops_driver_common/driver.h"
+#include "../returnval.hpp"
+#include "../errorstrings.hpp"
+
+using namespace std;
+
+class DriverRemoveTest : public StorageTest {
+protected:
+    inline void CreateRandomFile(string *created_file) const {
+        ASSERT_NE(created_file, nullptr);
+        string random_local_file = url.RandomLocalFile();
+        ASSERT_EQ(driver_copyToLocal(url.File().c_str(), random_local_file.c_str()), kOtherSuccess) << "Failed to create random file: failed to copy remote file to local filesystem.";
+        string random_remote_file = url.RandomOutputFile();
+        ASSERT_EQ(driver_copyFromLocal(random_local_file.c_str(), random_remote_file.c_str()), kOtherSuccess) << "Failed to create random file: failed to copy local file to remote filesystem.";
+        ASSERT_EQ(driver_fileExists(random_remote_file.c_str()), kTrue) << "Failed to create random file: just-uploaded file does not exist on remote filesystem.";
+        *created_file = random_remote_file;
+    }
+};
+
+TEST_F(DriverRemoveTest, SimplestCaseOK) {
+    string new_file; CreateRandomFile(&new_file);
+
+    // Remove remote file: should succeed.
+    ASSERT_EQ(driver_remove(new_file.c_str()), kOtherSuccess);
+    // Remote file should not exist on remote filesystem anymore.
+    ASSERT_EQ(driver_fileExists(new_file.c_str()), kFalse);
+}
+
+TEST_F(DriverRemoveTest, DoubleRemovalOK) {
+    // It is not clear at the moment whether the driver_remove function should be idempotent or more like C's remove function.
+    GTEST_SKIP();
+
+    string new_file; CreateRandomFile(&new_file);
+
+    // First removal.
+    ASSERT_EQ(driver_remove(new_file.c_str()), kOtherSuccess);
+    // Remote file should not exist on remote filesystem anymore.
+    ASSERT_EQ(driver_fileExists(new_file.c_str()), kFalse);
+    
+    // Double removal: should succeed because removal operation is idempotent.
+    ASSERT_EQ(driver_remove(new_file.c_str()), kOtherSuccess);
+    // Remote file should not exist on remote filesystem.
+    ASSERT_EQ(driver_fileExists(new_file.c_str()), kFalse);
+}
+
+TEST_F(DriverRemoveTest, RemoveNonexistentOK) {
+    // It is not clear at the moment whether the driver_remove function should be idempotent or more like C's remove function.
+    GTEST_SKIP();
+
+    string nonexistent_file = url.RandomOutputFile();
+    ASSERT_EQ(driver_fileExists(nonexistent_file.c_str()), kFalse) << "Randomly named remote file exists: random name collision.";
+
+    // Try to remove nonexistent file: should succeed because removal operation is idempotent.
+    ASSERT_EQ(driver_remove(nonexistent_file.c_str()), kOtherSuccess);
+    // Remote file should not exist on remote filesystem.
+    ASSERT_EQ(driver_fileExists(nonexistent_file.c_str()), kFalse);
+}
+
+TEST_F(DriverRemoveTest, NotConnectedKO) {
+    string new_file; CreateRandomFile(&new_file);
+
+    // Disconnect.
+    ASSERT_EQ(driver_disconnect(), kOtherSuccess);
+
+    // Try to remove remote file while not connected: should fail.
+    ASSERT_EQ(driver_remove(new_file.c_str()), kOtherFailure);
+    ASSERT_NE(string(driver_getlasterror()).find(ERR_NOT_CONNECTED), string::npos);
+
+    // Connect to verify file still exists on remote filesystem.
+    ASSERT_EQ(driver_connect(), kOtherSuccess);
+    ASSERT_EQ(driver_fileExists(new_file.c_str()), kTrue);
+}
+
+TEST_F(DriverRemoveTest, NullPointerKO) {
+    // Pass null pointer to removal function: should fail.
+    ASSERT_EQ(driver_remove(nullptr), kOtherFailure);
+    char formatted_null_ptr_error[256];
+    snprintf(formatted_null_ptr_error, 256, ERR_NULL_PTR, "driver_remove", "filename");
+    ASSERT_NE(string(driver_getlasterror()).find(formatted_null_ptr_error), string::npos);
+}
+
+TEST_F(DriverRemoveTest, InvalidURLKO) {
+    // Pass invalid URL to removal function: should fail.
+    ASSERT_EQ(driver_remove("invalid URL"), kOtherFailure);
+    ASSERT_NE(driver_getlasterror(), nullptr);
+}

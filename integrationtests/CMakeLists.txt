@@ -31,6 +31,9 @@ add_executable(
   returnval.hpp
   utils.hpp
   urls.hpp
+  errorstrings.hpp
+  errorstrings.cpp
+  function_specific/driver_remove.cpp
   ../src/khiops_driver_common/driver.h)
 
 target_include_directories(basic_test PRIVATE src ../src)
