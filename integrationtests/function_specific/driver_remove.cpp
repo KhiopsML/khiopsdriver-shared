@@ -13,7 +13,7 @@ using namespace std;
 class DriverRemoveTest : public StorageTest {};
 
 TEST_F(DriverRemoveTest, SimplestCaseOK) {
-    string new_file; this->CreateRandomFile(&new_file);
+    string new_file; this->CreateRandomFileWithContent(&new_file);
 
     // Remove remote file: should succeed.
     ASSERT_EQ(driver_remove(new_file.c_str()), kOtherSuccess);
@@ -25,7 +25,7 @@ TEST_F(DriverRemoveTest, DoubleRemovalOK) {
     // It is not clear at the moment whether the driver_remove function should be idempotent or more like C's remove function.
     GTEST_SKIP();
 
-    string new_file; this->CreateRandomFile(&new_file);
+    string new_file; this->CreateRandomFileWithContent(&new_file);
 
     // First removal.
     ASSERT_EQ(driver_remove(new_file.c_str()), kOtherSuccess);
@@ -52,7 +52,7 @@ TEST_F(DriverRemoveTest, RemoveNonexistentOK) {
 }
 
 TEST_F(DriverRemoveTest, NotConnectedKO) {
-    string new_file; this->CreateRandomFile(&new_file);
+    string new_file; this->CreateRandomFileWithContent(&new_file);
 
     // Disconnect.
     ASSERT_EQ(driver_disconnect(), kOtherSuccess);
