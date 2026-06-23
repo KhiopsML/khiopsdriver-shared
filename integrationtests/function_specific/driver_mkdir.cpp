@@ -9,22 +9,7 @@
 
 using namespace std;
 
-class DriverMkdirTest : public StorageTest {
-protected:
-    vector<string> created_dirs;
-    inline void SetUp() override {
-        StorageTest::SetUp();
-        this->created_dirs.clear();
-    }
-    inline void TearDown() override {
-        for (const string &created_dir : this->created_dirs) {
-            if (driver_dirExists(created_dir.c_str()) == kTrue) {
-                ASSERT_EQ(driver_rmdir(created_dir.c_str()), kOtherSuccess) << "Failed to remove created directory.";
-            }
-        }
-        StorageTest::TearDown();
-    }
-};
+class DriverMkdirTest : public StorageTest {};
 
 TEST_F(DriverMkdirTest, SimplestCaseOK) {
     if (GetStorageType() == StorageType::BLOB) {
@@ -37,8 +22,7 @@ TEST_F(DriverMkdirTest, SimplestCaseOK) {
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kFalse) << "Randomly named remote directory already exists: random name collision.";
     // Create the remote directory.
     ASSERT_EQ(driver_mkdir(created_dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
-    // Save the directory URI for removal during clean-up.
-    this->created_dirs.push_back(created_dir);
+    this->PrepareDirForCleanup(created_dir);
     // Make sure the remote directory now exists.
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kTrue) << "Remote directory not found after its creation.";
 }
