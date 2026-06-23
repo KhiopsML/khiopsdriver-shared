@@ -6,6 +6,7 @@
 #include "khiops_driver_common/driver.h"
 #include "../returnval.hpp"
 #include "../errorstrings.hpp"
+#include "../utils.hpp"
 
 using namespace std;
 
@@ -13,11 +14,8 @@ class DriverRemoveTest : public StorageTest {
 protected:
     inline void CreateRandomFile(string *created_file) const {
         ASSERT_NE(created_file, nullptr);
-        string random_local_file = url.RandomLocalFile();
-        ASSERT_EQ(driver_copyToLocal(url.File().c_str(), random_local_file.c_str()), kOtherSuccess) << "Failed to create random file: failed to copy remote file to local filesystem.";
         string random_remote_file = url.RandomOutputFile();
-        ASSERT_EQ(driver_copyFromLocal(random_local_file.c_str(), random_remote_file.c_str()), kOtherSuccess) << "Failed to create random file: failed to copy local file to remote filesystem.";
-        ASSERT_EQ(driver_fileExists(random_remote_file.c_str()), kTrue) << "Failed to create random file: just-uploaded file does not exist on remote filesystem.";
+        CopyFile(url.File(), random_remote_file);
         *created_file = random_remote_file;
     }
 };
