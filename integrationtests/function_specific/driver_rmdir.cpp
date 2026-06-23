@@ -8,17 +8,7 @@
 
 using namespace std;
 
-class DriverRmdirTest : public StorageTest {
-protected:
-    inline void CreateRandomDir(string *created_dir) const {
-        ASSERT_NE(created_dir, nullptr);
-        string new_dir = url.NewRandomDir();
-        ASSERT_EQ(driver_dirExists(new_dir.c_str()), kFalse) << "Randomly named remote directory already exists: random name collision.";
-        ASSERT_EQ(driver_mkdir(new_dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
-        ASSERT_EQ(driver_dirExists(new_dir.c_str()), kTrue) << "Remote directory not found after its creation.";
-        *created_dir = new_dir;
-    }
-};
+class DriverRmdirTest : public StorageTest {};
 
 TEST_F(DriverRmdirTest, SimplestCaseOK) {
     if (GetStorageType() == StorageType::BLOB) {
@@ -33,4 +23,23 @@ TEST_F(DriverRmdirTest, SimplestCaseOK) {
     ASSERT_EQ(driver_rmdir(created_dir.c_str()), kOtherSuccess) << "Failed to remove remote directory.";
     // Make sure the remote directory does not exist anymore.
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kFalse) << "Remote directory still found after its removal.";
+}
+
+TEST_F(DriverRmdirTest, RecursiveRemovalOK) {
+    string dir_root; this->CreateRandomDir(&dir_root);
+    this->CreateDirAt(dir_root + "a/");
+    this->CreateDirAt(dir_root + "a/aa/");
+    this->CreateDirAt(dir_root + "b/");
+    this->CreateDirAt(dir_root + "b/ba/");
+    this->CreateEmptyFileAt(dir_root + "b/ba/baa");
+    this->CreateDirAt(dir_root + "b/ba/bab/");
+    this->CreateDirAt(dir_root + "b/bb/");
+    ASSERT_EQ(driver_rmdir(dir_root.c_str()), kOtherSuccess);
+    ASSERT_EQ(driver_dirExists((dir_root + "a/").c_str()), kFalse);
+    ASSERT_EQ(driver_dirExists((dir_root + "a/aa/").c_str()), kFalse);
+    ASSERT_EQ(driver_dirExists((dir_root + "b/").c_str()), kFalse);
+    ASSERT_EQ(driver_dirExists((dir_root + "b/ba/").c_str()), kFalse);
+    ASSERT_EQ(driver_fileExists((dir_root + "b/ba/baa").c_str()), kFalse);
+    ASSERT_EQ(driver_dirExists((dir_root + "b/ba/bab/").c_str()), kFalse);
+    ASSERT_EQ(driver_dirExists((dir_root + "b/bb/").c_str()), kFalse);
 }
