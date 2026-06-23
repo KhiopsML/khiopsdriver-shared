@@ -36,6 +36,7 @@ add_executable(
   function_specific/driver_remove.cpp
   function_specific/driver_mkdir.cpp
   function_specific/driver_rmdir.cpp
+  function_specific/driver_fclose.cpp
   ../src/khiops_driver_common/driver.h)
 
 target_include_directories(basic_test PRIVATE src ../src)
