@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <string>
+#include <vector>
 
 namespace {
 class NoErrorsLeftFixture : public testing::Test {
@@ -38,15 +39,35 @@ protected:
 
 class StorageTest : public UrlFixture {
 protected:
-  void SetUp() override {
+  std::vector<std::string> created_dirs;
+  std::vector<std::string> created_files;
+  inline void SetUp() override {
     UrlFixture::SetUp();
+    this->created_dirs.clear();
+    this->created_files.clear();
     ASSERT_EQ(driver_connect(), kOtherSuccess) << "Driver failed to connect during test initialization.";
     ASSERT_EQ(driver_isConnected(), kTrue) << "After driver connected, it is still disconnected.";
   }
-  void TearDown() override {
+  inline void TearDown() override {
+    for (const std::string &created_dir : this->created_dirs) {
+      if (driver_dirExists(created_dir.c_str()) == kTrue) {
+        ASSERT_EQ(driver_rmdir(created_dir.c_str()), kOtherSuccess) << "Failed to remove created directory.";
+      }
+    }
+    for (const std::string &created_file : this->created_files) {
+      if (driver_fileExists(created_file.c_str()) == kTrue) {
+        ASSERT_EQ(driver_remove(created_file.c_str()), kOtherSuccess) << "Failed to remove created file.";
+      }
+    }
     ASSERT_EQ(driver_disconnect(), kOtherSuccess) << "Driver failed to disconnect during test finalization.";
     ASSERT_EQ(driver_isConnected(), kFalse) << "After driver disconnected, it is still connected.";
     UrlFixture::TearDown();
+  }
+  inline void PrepareDirForCleanup(const std::string &dir) {
+    this->created_dirs.push_back(dir);
+  }
+  inline void PrepareFileForCleanup(const std::string &file) {
+    this->created_files.push_back(file);
   }
 };
 
