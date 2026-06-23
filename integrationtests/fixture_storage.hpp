@@ -6,69 +6,94 @@
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <string>
-#include <vector>
+#include <unordered_set>
 
 namespace {
 class NoErrorsLeftFixture : public testing::Test {
 protected:
-  void TearDown() override {
-    // Make sure there are no errors left to read.
-    const char *last_error = driver_getlasterror();
-    ASSERT_EQ(last_error, nullptr) << "A driver error is still detected after the end of the test: '" << last_error << "'.";
-    testing::Test::TearDown();
-  }
+    void TearDown() override {
+        // Make sure there are no errors left to read.
+        const char *last_error = driver_getlasterror();
+        ASSERT_EQ(last_error, nullptr) << "A driver error is still detected after the end of the test: '" << last_error << "'.";
+        testing::Test::TearDown();
+    }
 };
 
 class UrlFixture : public NoErrorsLeftFixture {
 protected:
-  void SetUp() override {
-    NoErrorsLeftFixture::SetUp();
-    url = StorageTestUrlProvider();
-    std::ostringstream oss;
+    void SetUp() override {
+        NoErrorsLeftFixture::SetUp();
+        url = StorageTestUrlProvider();
+        std::ostringstream oss;
 #ifdef _WIN32
-    oss << std::getenv("TEMP") << "\\out-" << boost::uuids::random_generator()()
-        << ".txt";
+        oss << std::getenv("TEMP") << "\\out-" << boost::uuids::random_generator()()
+            << ".txt";
 #else
-    oss << "/tmp/out-" << boost::uuids::random_generator()() << ".txt";
+        oss << "/tmp/out-" << boost::uuids::random_generator()() << ".txt";
 #endif
-    sLocalFilePath = oss.str();
-  }
-  StorageTestUrlProvider url;
-  std::string sLocalFilePath;
+        sLocalFilePath = oss.str();
+    }
+    StorageTestUrlProvider url;
+    std::string sLocalFilePath;
 };
 
 class StorageTest : public UrlFixture {
 protected:
-  std::vector<std::string> created_dirs;
-  std::vector<std::string> created_files;
-  inline void SetUp() override {
-    UrlFixture::SetUp();
-    this->created_dirs.clear();
-    this->created_files.clear();
-    ASSERT_EQ(driver_connect(), kOtherSuccess) << "Driver failed to connect during test initialization.";
-    ASSERT_EQ(driver_isConnected(), kTrue) << "After driver connected, it is still disconnected.";
-  }
-  inline void TearDown() override {
-    for (const std::string &created_dir : this->created_dirs) {
-      if (driver_dirExists(created_dir.c_str()) == kTrue) {
-        ASSERT_EQ(driver_rmdir(created_dir.c_str()), kOtherSuccess) << "Failed to remove created directory.";
-      }
+
+    inline void SetUp() override {
+        UrlFixture::SetUp();
+        this->created_dirs.clear();
+        this->created_files.clear();
+        ASSERT_EQ(driver_connect(), kOtherSuccess) << "Driver failed to connect during test initialization.";
+        ASSERT_EQ(driver_isConnected(), kTrue) << "After driver connected, it is still disconnected.";
     }
-    for (const std::string &created_file : this->created_files) {
-      if (driver_fileExists(created_file.c_str()) == kTrue) {
-        ASSERT_EQ(driver_remove(created_file.c_str()), kOtherSuccess) << "Failed to remove created file.";
-      }
+
+    inline void TearDown() override {
+        for (const std::string &created_dir : this->created_dirs) {
+            if (driver_dirExists(created_dir.c_str()) == kTrue) {
+                ASSERT_EQ(driver_rmdir(created_dir.c_str()), kOtherSuccess) << "Failed to remove created directory.";
+            }
+        }
+        for (const std::string &created_file : this->created_files) {
+            if (driver_fileExists(created_file.c_str()) == kTrue) {
+                ASSERT_EQ(driver_remove(created_file.c_str()), kOtherSuccess) << "Failed to remove created file.";
+            }
+        }
+        ASSERT_EQ(driver_disconnect(), kOtherSuccess) << "Driver failed to disconnect during test finalization.";
+        ASSERT_EQ(driver_isConnected(), kFalse) << "After driver disconnected, it is still connected.";
+        UrlFixture::TearDown();
     }
-    ASSERT_EQ(driver_disconnect(), kOtherSuccess) << "Driver failed to disconnect during test finalization.";
-    ASSERT_EQ(driver_isConnected(), kFalse) << "After driver disconnected, it is still connected.";
-    UrlFixture::TearDown();
-  }
-  inline void PrepareDirForCleanup(const std::string &dir) {
-    this->created_dirs.push_back(dir);
-  }
-  inline void PrepareFileForCleanup(const std::string &file) {
-    this->created_files.push_back(file);
-  }
+
+    inline void PlanDirCleanup(const std::string &dir) {
+        ASSERT_TRUE(this->created_dirs.insert(dir).second) << "Failed to plan directory clean-up (already planned?).";
+    }
+
+    inline void PlanFileCleanup(const std::string &file) {
+        ASSERT_TRUE(this->created_files.insert(file).second) << "Failed to plan file clean-up (already planned?).";
+    }
+
+    inline void CreateRandomFile(string *created_file) {
+        ASSERT_NE(created_file, nullptr);
+        string random_remote_file = url.RandomOutputFile();
+        CopyFile(url.File(), random_remote_file);
+        this->PlanFileCleanup(random_remote_file);
+        *created_file = random_remote_file;
+    }
+
+    inline void CreateRandomDir(string *created_dir) {
+        ASSERT_NE(created_dir, nullptr);
+        string new_dir = url.NewRandomDir();
+        ASSERT_EQ(driver_dirExists(new_dir.c_str()), kFalse) << "Randomly named remote directory already exists: random name collision.";
+        ASSERT_EQ(driver_mkdir(new_dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
+        this->PlanDirCleanup(new_dir);
+        ASSERT_EQ(driver_dirExists(new_dir.c_str()), kTrue) << "Remote directory not found after its creation.";
+        *created_dir = new_dir;
+    }
+
+private:
+
+    std::unordered_set<std::string> created_dirs;
+    std::unordered_set<std::string> created_files;
 };
 
 class IoTest : public StorageTest {};

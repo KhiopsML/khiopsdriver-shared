@@ -22,7 +22,7 @@ TEST_F(DriverMkdirTest, SimplestCaseOK) {
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kFalse) << "Randomly named remote directory already exists: random name collision.";
     // Create the remote directory.
     ASSERT_EQ(driver_mkdir(created_dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
-    this->PrepareDirForCleanup(created_dir);
+    this->PlanDirCleanup(created_dir);
     // Make sure the remote directory now exists.
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kTrue) << "Remote directory not found after its creation.";
 }

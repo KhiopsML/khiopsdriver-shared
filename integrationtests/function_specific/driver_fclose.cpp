@@ -17,7 +17,7 @@ TEST_F(DriverFCloseTest, FileClosingRightAfterWriteModeOpeningOK) {
     ASSERT_NE(handle, nullptr) << "Failed to open file in write-mode.";
     ASSERT_EQ(driver_fclose(handle), kSuccess) << "Failed to close file.";
     ASSERT_EQ(driver_fileExists(new_file.c_str()), kTrue) << "File has not been created.";
-    this->PrepareFileForCleanup(new_file);
+    this->PlanFileCleanup(new_file);
     long long int size = driver_getFileSize(new_file.c_str());
     ASSERT_NE(size, -1LL) << "Failed to get file size.";
     ASSERT_EQ(size, 0LL) << "File is not empty.";
