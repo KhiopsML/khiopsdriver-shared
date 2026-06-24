@@ -134,6 +134,7 @@ TEST_F(StorageTest, RmDir) {
 TEST_F(StorageTest, CopyToLocalInexistantFile) {
   ASSERT_FALSE(LocalFileExists(sLocalFilePath)) << "The file exists locally before trying to copy from remote.";
   ASSERT_EQ(driver_copyToLocal(url.InexistantFile().c_str(), sLocalFilePath.c_str()), kOtherFailure) << "Copying inexistant file from remote to local did not indicate failure.";
+  ASSERT_NE(driver_getlasterror(), nullptr) << "No error detected but there should have been one.";
   ASSERT_FALSE(LocalFileExists(sLocalFilePath)) << "The local file has been created.";
 }
 
