@@ -14,7 +14,7 @@
 
 using namespace std;
 
-int CopyFile(const char *file_name_input, const char *file_name_output,
+int CopyFile_(const char *file_name_input, const char *file_name_output,
              size_t nBufferSize);
 int CopyFileWithFseek(const char *file_name_input, const char *file_name_output,
                       size_t nBufferSize);
@@ -72,7 +72,7 @@ void EndToEndTest_(string sInputUrl, string sOutputUrl, string sLocalFilePath,
   size_t nInputFileSize = driver_getFileSize(sInputUrl.c_str());
   cout << "Size of " << sInputUrl << " is " << nInputFileSize << endl;
 
-  for (const auto &Copy : {CopyFile, CopyFileWithFseek, CopyFileWithAppend}) {
+  for (const auto &Copy : {CopyFile_, CopyFileWithFseek, CopyFileWithAppend}) {
     ASSERT_EQ(Copy(sInputUrl.c_str(), sOutputUrl.c_str(), nBufferSize),
               kOtherSuccess)
         << "failed to copy file";
@@ -100,7 +100,7 @@ void EndToEndTest_(string sInputUrl, string sOutputUrl, string sLocalFilePath,
 }
 
 // Copy file_name_input to file_name_output by steps of 1Kb
-int CopyFile(const char *sInputFileUrl, const char *sOutputFileUrl,
+int CopyFile_(const char *sInputFileUrl, const char *sOutputFileUrl,
              size_t nBufferSize) {
   cout << "Standard copy of " << sInputFileUrl << " to " << sOutputFileUrl
        << endl;
