@@ -20,8 +20,6 @@ int Check_driver_isConnected();
 
 int Check_driver_getSystemPreferredBufferSize();
 
-int Check_driver_exist(const char *filename);
-
 int Check_driver_fileExists(const char *sFilePathName);
 
 int Check_driver_dirExists(const char *sFilePathName);

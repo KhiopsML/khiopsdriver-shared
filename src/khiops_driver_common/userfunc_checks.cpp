@@ -54,14 +54,6 @@ int Check_driver_getSystemPreferredBufferSize() {
     return 0;
 }
 
-int Check_driver_exist(const char *filename) {
-    GetLogger()->warn("Function driver_exist is deprecated. Consider using the more specific driver_fileExists or driver_dirExists function.");
-    GetLogger()->info("Checking if file or directory exists at URL {}...", filename);
-    if (CheckInitialized()) return -1;
-    if (CheckNotNull(filename, STRINGIFY(filename), "driver_exist")) return -1;
-    return 0;
-}
-
 int Check_driver_fileExists(const char *sFilePathName) {
     GetLogger()->info("Checking if file exists at URL {}...", sFilePathName);
     if (CheckInitialized()) return -1;
