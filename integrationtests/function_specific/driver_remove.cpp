@@ -52,6 +52,7 @@ TEST_F(DriverRemoveTest, RemoveNonexistentOK) {
 }
 
 TEST_F(DriverRemoveTest, NotConnectedKO) {
+    if (string(driver_getDriverName()) == "GCS driver") GTEST_SKIP();  // https://github.com/KhiopsML/khiopsdriver-gcs/issues/54
     string new_file; this->CreateRandomFileWithContent(&new_file);
 
     // Disconnect.
