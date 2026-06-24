@@ -3,6 +3,7 @@
 #include "khiops_driver_common/driver.h"
 #include "urls.hpp"
 #include "returnval.hpp"
+#include "utils.hpp"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <string>
@@ -72,7 +73,7 @@ protected:
         ASSERT_TRUE(this->created_files.insert(file).second) << "Failed to plan file clean-up (already planned?).";
     }
 
-    inline void CreateEmptyFileAt(const string &file) {
+    inline void CreateEmptyFileAt(const std::string &file) {
         ASSERT_EQ(driver_fileExists(file.c_str()), kFalse) << "File already exists.";
         this->PlanFileCleanup(file);
         void *handle = driver_fopen(file.c_str(), 'w');
@@ -81,9 +82,9 @@ protected:
         ASSERT_EQ(driver_fileExists(file.c_str()), kTrue) << "File has not been created.";
     }
 
-    inline void CreateRandomEmptyFile(string *created_file) {
+    inline void CreateRandomEmptyFile(std::string *created_file) {
         ASSERT_NE(created_file, nullptr);
-        string new_file = this->url.RandomOutputFile();
+        std::string new_file = this->url.RandomOutputFile();
         ASSERT_EQ(driver_fileExists(new_file.c_str()), kFalse) << "Randomly named file already exists: random name collision.";
         this->PlanFileCleanup(new_file);
         void *handle = driver_fopen(new_file.c_str(), 'w');
@@ -93,24 +94,24 @@ protected:
         *created_file = new_file;
     }
 
-    inline void CreateRandomFileWithContent(string *created_file) {
+    inline void CreateRandomFileWithContent(std::string *created_file) {
         ASSERT_NE(created_file, nullptr);
-        string random_remote_file = url.RandomOutputFile();
+        std::string random_remote_file = url.RandomOutputFile();
         CopyFile(url.File(), random_remote_file);
         this->PlanFileCleanup(random_remote_file);
         *created_file = random_remote_file;
     }
 
-    inline void CreateDirAt(const string &dir) {
+    inline void CreateDirAt(const std::string &dir) {
         ASSERT_EQ(driver_dirExists(dir.c_str()), kFalse) << "Remote directory already exists.";
         this->PlanDirCleanup(dir);
         ASSERT_EQ(driver_mkdir(dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
         ASSERT_EQ(driver_dirExists(dir.c_str()), kTrue) << "Remote directory not found after its creation.";
     }
 
-    inline void CreateRandomDir(string *created_dir) {
+    inline void CreateRandomDir(std::string *created_dir) {
         ASSERT_NE(created_dir, nullptr);
-        string new_dir = url.NewRandomDir();
+        std::string new_dir = url.NewRandomDir();
         ASSERT_EQ(driver_dirExists(new_dir.c_str()), kFalse) << "Randomly named remote directory already exists: random name collision.";
         this->PlanDirCleanup(new_dir);
         ASSERT_EQ(driver_mkdir(new_dir.c_str()), kOtherSuccess) << "Failed to create remote directory.";
