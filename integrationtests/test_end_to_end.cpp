@@ -78,7 +78,7 @@ void EndToEndTest_(string sInputUrl, string sOutputUrl, string sLocalFilePath,
         << "failed to copy file";
     ASSERT_EQ(compareSize(sOutputUrl.c_str(), nInputFileSize), kOtherSuccess)
         << "input file and output file sizes are different";
-    driver_remove(sOutputUrl.c_str());
+    ASSERT_EQ(driver_remove(sOutputUrl.c_str()), kOtherSuccess);
     ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kFalse)
         << "failed to remove newly created file";
   }
@@ -94,7 +94,7 @@ void EndToEndTest_(string sInputUrl, string sOutputUrl, string sLocalFilePath,
       << "failed to copy file";
   ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kTrue)
       << sOutputUrl << " is missing";
-  driver_remove(sOutputUrl.c_str());
+  ASSERT_EQ(driver_remove(sOutputUrl.c_str()), kOtherSuccess);
   ASSERT_EQ(driver_fileExists(sOutputUrl.c_str()), kFalse)
       << "failed to remove newly created file";
 }
