@@ -195,6 +195,10 @@ TEST_F(StorageTest, Concat) {
 }
 
 TEST_F(StorageTest, ComposeMultifile) {
+  if(IsAzuriteStorage()) {
+    GTEST_SKIP() << "Azurite emulator does not support features needed for this operation.";
+  }
+
   // Define source files assumed to exist in the test dataset
   const std::vector<std::string> original_sources = url.SplitFileParts();
   const size_t nsources = original_sources.size();
