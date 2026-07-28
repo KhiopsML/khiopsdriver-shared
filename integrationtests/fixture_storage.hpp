@@ -102,6 +102,24 @@ protected:
         *created_file = random_remote_file;
     }
 
+    inline void CreateRandomMultiFileWithContent(std::string *created_multifile) {
+        ASSERT_NE(created_multifile, nullptr);
+        std::ostringstream oss;
+        oss << url.RandomOutputFile() << ".multifile";
+        std::string prefix = oss.str();
+        oss << "*";
+        std::string multifile_url = oss.str();
+        std::vector<std::string> file_parts = url.SplitFileParts();
+        for (size_t part_index = 0ULL; part_index != file_parts.size(); part_index++) {
+            std::ostringstream file_part_oss;
+            file_part_oss << prefix << part_index;
+            std::string file_part = file_part_oss.str();
+            CopyFile(file_parts[part_index], file_part);
+            this->PlanFileCleanup(file_part);
+        }
+        *created_multifile = multifile_url;
+    }
+
     inline void CreateDirAt(const std::string &dir) {
         ASSERT_EQ(driver_dirExists(dir.c_str()), kFalse) << "Remote directory already exists.";
         this->PlanDirCleanup(dir);

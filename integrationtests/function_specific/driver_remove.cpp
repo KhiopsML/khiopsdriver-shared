@@ -51,6 +51,12 @@ TEST_F(DriverRemoveTest, RemoveNonexistentOK) {
     ASSERT_EQ(driver_fileExists(nonexistent_file.c_str()), kFalse);
 }
 
+TEST_F(DriverRemoveTest, RemoveMultifileOK) {
+    string new_multifile; this->CreateRandomMultiFileWithContent(&new_multifile);
+    ASSERT_EQ(driver_remove(new_multifile.c_str()), kOtherSuccess);
+    ASSERT_EQ(driver_fileExists(new_multifile.c_str()), kFalse);
+}
+
 TEST_F(DriverRemoveTest, NotConnectedKO) {
     if (string(driver_getDriverName()) == "GCS driver") GTEST_SKIP();  // https://github.com/KhiopsML/khiopsdriver-gcs/issues/54
     string new_file; this->CreateRandomFileWithContent(&new_file);
