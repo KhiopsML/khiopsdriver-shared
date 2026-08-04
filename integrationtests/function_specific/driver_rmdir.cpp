@@ -21,8 +21,6 @@ TEST_F(DriverRmdirTest, SimplestCaseOK) {
 }
 
 TEST_F(DriverRmdirTest, RecursiveRemovalOK) {
-    GTEST_SKIP();  // For now...
-
     string dir_root; this->CreateRandomDir(&dir_root);
     this->CreateDirAt(dir_root + "a/");
     this->CreateDirAt(dir_root + "a/aa/");
