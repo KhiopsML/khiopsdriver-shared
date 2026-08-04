@@ -104,27 +104,19 @@ TEST_F(StorageTest, GetFileSizeInvalidCredentialsFailure) {
 #endif
 
 TEST_F(StorageTest, MkDir) {
-  if(GetStorageType() == StorageType::FILE) {
-    std::string sNewDir = url.NewRandomDir();
-    ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kFalse);
-    ASSERT_EQ(driver_mkdir(sNewDir.c_str()), kOtherSuccess);
-    ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kTrue);
-    ASSERT_EQ(driver_rmdir(sNewDir.c_str()), kOtherSuccess);
-  } else {
-    ASSERT_EQ(driver_mkdir(url.NewRandomDir().c_str()), kOtherSuccess);
-  }
+  std::string sNewDir = url.NewRandomDir();
+  ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kFalse);
+  ASSERT_EQ(driver_mkdir(sNewDir.c_str()), kOtherSuccess);
+  ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kTrue);
+  ASSERT_EQ(driver_rmdir(sNewDir.c_str()), kOtherSuccess);
 }
 
 TEST_F(StorageTest, RmDir) {
-  if(GetStorageType() == StorageType::FILE) {
-    std::string sNewDir = url.NewRandomDir();
-    ASSERT_EQ(driver_mkdir(sNewDir.c_str()), kOtherSuccess);
-    ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kTrue);
-    ASSERT_EQ(driver_rmdir(sNewDir.c_str()), kOtherSuccess);
-    ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kFalse);
-  } else {
-    ASSERT_EQ(driver_rmdir(url.NewRandomDir().c_str()), kOtherSuccess);
-  }
+  std::string sNewDir = url.NewRandomDir();
+  ASSERT_EQ(driver_mkdir(sNewDir.c_str()), kOtherSuccess);
+  ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kTrue);
+  ASSERT_EQ(driver_rmdir(sNewDir.c_str()), kOtherSuccess);
+  ASSERT_EQ(driver_dirExists(sNewDir.c_str()), kFalse);
 }
 
 TEST_F(StorageTest, CopyToLocalInexistantFile) {
@@ -156,18 +148,14 @@ TEST_F(StorageTest, Concat) {
 
   ASSERT_EQ(driver_fileExists(output.c_str()), kFalse) << "The output file exists before concatenation.";
   // Copy sources. The temporary copies will be the actual sources of the concatenation.
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "The temporary directory already exists.";
-  }
+  ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "The temporary directory already exists.";
   ASSERT_EQ(driver_mkdir(tmpdir.c_str()), kOtherSuccess) << "Could not create temporary directory.";
   ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kTrue) << "The temporary directory already exists.";
   for(size_t i = 0ULL; i < nsources; i++) {
     CopyFile(original_sources[i], tmpsources[i]);
   }
   // Concat
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(outputdir.c_str()), kFalse) << "The destination directory already exists.";
-  }
+  ASSERT_EQ(driver_dirExists(outputdir.c_str()), kFalse) << "The destination directory already exists.";
   ASSERT_EQ(driver_mkdir(outputdir.c_str()), kOtherSuccess) << "Could not create the destination directory.";
   ASSERT_EQ(driver_dirExists(outputdir.c_str()), kTrue) << "The destination directory already exists.";
   ASSERT_EQ(driver_concat(output.c_str(), tmpsources_as_cstr.data(), nsources), kOtherSuccess) << "Concatenation failed.";
@@ -181,13 +169,9 @@ TEST_F(StorageTest, Concat) {
   ASSERT_EQ(driver_remove(output.c_str()), kOtherSuccess) << "Failed to remove output file.";
   ASSERT_EQ(driver_fileExists(output.c_str()), kFalse) << "Output file still exists after removal.";
   ASSERT_EQ(driver_rmdir(outputdir.c_str()), kOtherSuccess) << "Could not delete destination directory.";
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(outputdir.c_str()), kFalse) << "Failed to remove destination directory.";
-  }
+  ASSERT_EQ(driver_dirExists(outputdir.c_str()), kFalse) << "Failed to remove destination directory.";
   ASSERT_EQ(driver_rmdir(tmpdir.c_str()), kOtherSuccess) << "Could not delete temporary directory.";
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Failed to remove temporary directory.";
-  }
+  ASSERT_EQ(driver_dirExists(tmpdir.c_str()), kFalse) << "Failed to remove temporary directory.";
 }
 
 TEST_F(StorageTest, ComposeMultifile) {

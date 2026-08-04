@@ -7,13 +7,6 @@
 #include <cstdlib>
 #include <fstream>
 
-enum struct StorageType { BLOB, FILE };
-
-inline StorageType GetStorageType() {
-  char *test_url_prefix = getenv("STORAGE_DRIVER_TEST_URL_PREFIX");
-  return test_url_prefix && std::string(test_url_prefix).find("https://khiopsdriverazure.file.core.windows.net/") == 0ULL ? StorageType::FILE : StorageType::BLOB;
-}
-
 inline bool IsAzuriteStorage() {
   char *azure_emulated_storage = getenv("AZURE_EMULATED_STORAGE");
   if(azure_emulated_storage) {
