@@ -69,11 +69,7 @@ TEST_F(StorageTest, DirExists) {
 }
 
 TEST_F(StorageTest, DirExistsNonExistentDir) {
-  if(GetStorageType() == StorageType::FILE) {
-    ASSERT_EQ(driver_dirExists(url.InexistantDir().c_str()), kFalse);
-  } else {
-    ASSERT_EQ(driver_dirExists(url.InexistantDir().c_str()), kTrue);
-  }
+  ASSERT_EQ(driver_dirExists(url.InexistantDir().c_str()), kFalse);
 }
 
 #ifndef _WIN32

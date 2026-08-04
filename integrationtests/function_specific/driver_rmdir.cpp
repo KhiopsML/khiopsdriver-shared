@@ -11,11 +11,6 @@ using namespace std;
 class DriverRmdirTest : public StorageTest {};
 
 TEST_F(DriverRmdirTest, SimplestCaseOK) {
-    if (GetStorageType() == StorageType::BLOB) {
-        // driver_rmdir does nothing when using a blob service.
-        GTEST_SKIP();
-    }
-
     string created_dir; this->CreateRandomDir(&created_dir);
     // Make sure the remote directory exists.
     ASSERT_EQ(driver_dirExists(created_dir.c_str()), kTrue) << "Remote directory not found after its creation.";
