@@ -2,6 +2,7 @@
 #include "fixture_storage.hpp"
 #include "returnval.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -185,4 +186,86 @@ TEST_F(IoTest, FReadWithConcurrentWrite) {
 
   ASSERT_EQ(driver_fclose(ihandle), kSuccess);
   ASSERT_EQ(driver_remove(file.c_str()), kOtherSuccess);
+}
+
+// Scenario: a file contains 5 structs of 4 bytes each (2 uint16_t fields),
+// followed by 2 trailing bytes ('A', 'B'), for a total of 22 bytes.
+// The caller asks for 6 elements of 4 bytes (24 bytes), crossing EOF.
+// Expected behaviour (mirroring fread from the C stdlib):
+//   - driver_fread returns 5 (number of complete 4-byte elements read)
+//   - the first 20 bytes of the buffer match the 5 written structs exactly
+//   - the 2 trailing bytes ('A', 'B') are physically deposited at buffer[20]
+//     and buffer[21], even though they do not form a complete element
+//   - buffer[22] and buffer[23] are untouched (the 6th element slot is partial)
+//   - the file offset is at EOF after the call
+//   - a subsequent driver_fread returns kFailure (already at EOF)
+TEST_F(IoTest, FReadPartialElementAtEOF) {
+  // Layout of each struct: two uint16_t fields.
+  // We use a plain struct with no padding (fields are 2 bytes each = 4 bytes total).
+  struct TwoU16 {
+    uint16_t a;
+    uint16_t b;
+  };
+  static_assert(sizeof(TwoU16) == 4, "TwoU16 must be exactly 4 bytes");
+
+  const string file = url.RandomOutputFile();
+  PlanFileCleanup(file);
+
+  // --- Write phase ---
+  // Write 5 structs then 2 trailing bytes ('A', 'B') = 22 bytes total.
+  {
+    void *ohandle = driver_fopen(file.c_str(), 'w');
+    ASSERT_NE(ohandle, nullptr);
+
+    const TwoU16 structs[5] = {{1, 2}, {3, 4}, {5, 6}, {7, 8}, {9, 10}};
+    ASSERT_EQ(driver_fwrite(structs, sizeof(TwoU16), 5, ohandle), 5)
+        << "Expected 5 elements written";
+
+    const char trailer[2] = {'A', 'B'};
+    ASSERT_EQ(driver_fwrite(trailer, 1, 2, ohandle), 2)
+        << "Expected 2 trailing bytes written";
+
+    ASSERT_EQ(driver_fclose(ohandle), kSuccess);
+  }
+
+  // Verify the file size is exactly 22 bytes.
+  ASSERT_EQ(driver_getFileSize(file.c_str()), 22LL)
+      << "File must be exactly 22 bytes (5 structs * 4 bytes + 2 trailing bytes)";
+
+  // --- Read phase ---
+  // Ask for 6 elements of 4 bytes (24 bytes) while only 22 are available.
+  // The buffer is zeroed so we can detect any unexpected overwrites.
+  uint8_t rbuffer[6 * sizeof(TwoU16)] = {};
+  void *ihandle = driver_fopen(file.c_str(), 'r');
+  ASSERT_NE(ihandle, nullptr);
+
+  const long long int elements_read = driver_fread(rbuffer, sizeof(TwoU16), 6, ihandle);
+
+  // Only 5 complete elements fit: 22 / 4 == 5.
+  ASSERT_EQ(elements_read, 5LL)
+      << "driver_fread must return the number of complete elements read (5), not byte count";
+
+  // The first 20 bytes (5 * 4) must match the 5 written structs byte-for-byte.
+  const TwoU16 expected[5] = {{1, 2}, {3, 4}, {5, 6}, {7, 8}, {9, 10}};
+  ASSERT_EQ(memcmp(rbuffer, expected, elements_read * sizeof(TwoU16)), 0)
+      << "First " << (elements_read * sizeof(TwoU16))
+      << " bytes of buffer must exactly match the written structs";
+
+  // fread deposits ALL bytes it can read into the buffer, even the 2 trailing
+  // bytes that do not form a complete element. So rbuffer[20]=='A' and
+  // rbuffer[21]=='B' are physically written, while rbuffer[22..23] are untouched.
+  ASSERT_EQ(rbuffer[20], static_cast<uint8_t>('A'))
+      << "First trailing byte ('A') must be present in the buffer";
+  ASSERT_EQ(rbuffer[21], static_cast<uint8_t>('B'))
+      << "Second trailing byte ('B') must be present in the buffer";
+  ASSERT_EQ(rbuffer[22], 0) << "Byte 22 must be untouched (zero-initialised)";
+  ASSERT_EQ(rbuffer[23], 0) << "Byte 23 must be untouched (zero-initialised)";
+
+  // A second read attempt, still at EOF, must fail.
+  uint8_t dummy[4] = {};
+  ASSERT_EQ(driver_fread(dummy, sizeof(TwoU16), 1, ihandle), kFailure)
+      << "Reading past EOF must return kFailure";
+  ASSERT_THAT(driver_getlasterror(), testing::HasSubstr("Cannot read after end of file."));
+
+  ASSERT_EQ(driver_fclose(ihandle), kSuccess);
 }
