@@ -94,8 +94,8 @@ VISIBLE void *driver_fopen(const char *filename, char mode);
 // Returns 0 on success, EOF on error
 VISIBLE int driver_fclose(void *stream);
 
-// Returns  the total number of elements read on success, -1 on error.
-// If EOF is reached, the number of elements read is less than size*count
+// Returns the number of elements read on success, -1 on error.
+// If EOF is reached, the number of elements read is less than count.
 // Note that the return type is long long int rather than size_t in order to
 // manage the -1 value
 VISIBLE long long int driver_fread(void *ptr, size_t size, size_t count,
@@ -112,9 +112,9 @@ VISIBLE const char *driver_getlasterror();
 // The following write functions are mandatory only is the driver is not
 // read-only. They are ignored otherwise, even if they are implemented
 
-// The number of elements written is returns in case of success, otherwise the
-// function returns -1 Note that the return type is long long int rather than
-// size_t in order to manage the -1 value
+// The number of elements written is returned in case of success, otherwise the
+// function returns -1. Note that the return type is long long int rather than
+// size_t in order to manage the -1 value.
 VISIBLE long long int driver_fwrite(const void *ptr, size_t size, size_t count,
                                     void *stream);
 
